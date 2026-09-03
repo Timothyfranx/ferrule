@@ -1,4 +1,4 @@
-# Book Pulse — DreamDEX Event Contracts Surface
+# Ferrule — DreamDEX Event Contracts Surface
 
 > **Hackathon Submission:** Somnia × DreamDEX Event Contracts Hackathon (DoraHacks)  
 > **Target Network:** Somnia Shannon Testnet (`50312`) / Somnia Mainnet (`5031`)  
@@ -8,9 +8,9 @@
 
 ## 1. Overview & Differentiation
 
-**Book Pulse** is an on-chain trading surface for DreamDEX Event Contracts (BTC/ETH/SOL Up/Down binary options).
+**Ferrule** is an on-chain trading surface for DreamDEX Event Contracts (BTC/ETH/SOL Up/Down binary options).
 
-Unlike existing apps that run generic points or off-chain rooms, Book Pulse is grounded directly in DreamDEX's **real Central Limit Order Book (CLOB)**:
+Unlike existing apps that run generic points or off-chain rooms, Ferrule is grounded directly in DreamDEX's **real Central Limit Order Book (CLOB)**:
 * **Live Crowd Lean Signal:** Derived directly from resting YES/NO order book depth and real-time probability pricing.
 * **Risk-Free Practice Mode:** Allows new users to trade against the *real* live order book and settle against *real* on-chain oracle outcomes without capital risk.
 * **Honest Probabilistic Scorecard:** Evaluates forecast calibration (binned probability accuracy and Brier score: $(1/N)\sum(p_i - o_i)^2$) rather than vanity win streaks.
@@ -115,4 +115,4 @@ npm run build
 ```bash
 npm run dev
 ```
-Open `http://localhost:3000` to interact with the Book Pulse trading surface on Somnia testnet.
+Open `http://localhost:3000` to interact with the Ferrule trading surface on Somnia testnet.

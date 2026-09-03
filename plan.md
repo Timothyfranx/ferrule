@@ -1,4 +1,4 @@
-# plan.md — Book Pulse build plan
+# plan.md — Ferrule build plan
 
 Team: 3 coding agents working in parallel. Submission window: Aug 25 – Sep 8, 2026.
 

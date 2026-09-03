@@ -255,9 +255,9 @@ export default function App() {
       {/* Header */}
       <header className="header">
         <div className="brand-section">
-          <div className="brand-icon">BP</div>
+          <div className="brand-icon">F</div>
           <div>
-            <h1 className="brand-title">Book Pulse</h1>
+            <h1 className="brand-title">Ferrule</h1>
             <div className="brand-tagline">DreamDEX Event Contracts · Crowd Lean & Strategy Terminal</div>
           </div>
         </div>

@@ -1,4 +1,4 @@
-# agents.md — Book Pulse + Practice Mode
+# agents.md — Ferrule + Practice Mode
 
 Rules for any AI coding agent (A, B, or C) working in this repo. Read before writing code.
 

@@ -1,4 +1,4 @@
-# Book Pulse + Practice Mode — Build Spec
+# Ferrule + Practice Mode — Build Spec
 
 **Hackathon:** Somnia × DreamDEX Event Contracts Hackathon
 **Submission window:** Aug 25 – Sep 8, 2026

@@ -1,4 +1,4 @@
-# design.md — Book Pulse + Practice Mode architecture
+# design.md — Ferrule + Practice Mode architecture
 
 ## One-liner
 A DreamDEX Event Contracts trading surface: a live crowd-lean signal from the real order
