@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -10,12 +10,14 @@ import {
   History, 
   Layers, 
   AlertTriangle,
-  CheckCircle2,
+  Bot,
   X
 } from "lucide-react";
 import { LiveDataLayer } from "../data/marketData.js";
 import { PracticeEngine } from "../engine/practiceEngine.js";
 import { ScorecardService } from "../scoring/scorecard.js";
+import { DEFAULT_BOT_CONFIGS, StrategyBotEngine } from "../bot/strategyEngine.js";
+import { BotTerminal } from "./BotTerminal.js";
 import type { 
   OpenWindow, 
   Call, 
@@ -23,18 +25,21 @@ import type {
   TradingMode, 
   CalibrationScorecard 
 } from "../types/shared.js";
+import type { BotConfig } from "../bot/types.js";
 
 // Initialize singletons
 const dataLayer = new LiveDataLayer();
 const practiceEngine = new PracticeEngine({ initialBankroll: 1000, maxStakePerCall: 100 });
+const botEngine = new StrategyBotEngine(DEFAULT_BOT_CONFIGS.fade_crowd, practiceEngine);
 
 export default function App() {
   const [mode, setMode] = useState<TradingMode>("practice");
-  const [activeTab, setActiveTab] = useState<"markets" | "scorecard" | "history">("markets");
+  const [activeTab, setActiveTab] = useState<"markets" | "bot" | "scorecard" | "history">("markets");
   const [windows, setWindows] = useState<OpenWindow[]>([]);
   const [calls, setCalls] = useState<Call[]>([]);
   const [bankroll, setBankroll] = useState<number>(practiceEngine.getBankroll());
   const [loading, setLoading] = useState(true);
+  const [, setBotTick] = useState(0); // For forcing UI re-render when bot logs arrive
 
   // Call modal state
   const [selectedWindow, setSelectedWindow] = useState<OpenWindow | null>(null);
@@ -45,7 +50,31 @@ export default function App() {
   // Transition modal state
   const [showTransitionModal, setShowTransitionModal] = useState<boolean>(false);
 
-  // Fetch live market data
+  // Load persisted calls on mount
+  useEffect(() => {
+    try {
+      const savedCalls = localStorage.getItem("ferrule_calls");
+      if (savedCalls) {
+        const parsed: Call[] = JSON.parse(savedCalls);
+        setCalls(parsed);
+      }
+    } catch {
+      // LocalStorage unavailable
+    }
+  }, []);
+
+  // Save calls to localStorage when changed
+  useEffect(() => {
+    try {
+      if (calls.length > 0) {
+        localStorage.setItem("ferrule_calls", JSON.stringify(calls));
+      }
+    } catch {
+      // LocalStorage unavailable
+    }
+  }, [calls]);
+
+  // Fetch live market data and feed bot
   useEffect(() => {
     let mounted = true;
 
@@ -55,6 +84,14 @@ export default function App() {
         if (mounted) {
           setWindows(liveWindows);
           setLoading(false);
+
+          // Feed live windows to Strategy Bot Engine
+          const botPlacedCall = await botEngine.evaluateTick(liveWindows);
+          if (botPlacedCall) {
+            setCalls(practiceEngine.getCalls());
+            setBankroll(practiceEngine.getBankroll());
+            setBotTick((t) => t + 1);
+          }
         }
       } catch (err) {
         console.error("Failed to load windows", err);
@@ -62,7 +99,7 @@ export default function App() {
     }
 
     loadData();
-    const interval = setInterval(loadData, 5000);
+    const interval = setInterval(loadData, 4000);
     return () => {
       mounted = false;
       clearInterval(interval);
@@ -82,38 +119,39 @@ export default function App() {
     return () => clearInterval(timer);
   }, []);
 
-  // Settlement watcher for pending calls
+  // Settlement watcher for pending calls (running against on-chain truth)
   useEffect(() => {
     const settlementInterval = setInterval(async () => {
       const pendingCalls = calls.filter((c) => c.settlementStatus === "pending");
       if (pendingCalls.length === 0) return;
 
       let updated = false;
-      const newCalls = [...calls];
 
       for (const c of pendingCalls) {
         try {
           const info = await dataLayer.getSettledMarketInfo(c.marketId);
           if (info.isResolved || info.isVoided) {
             if (c.mode === "practice") {
-              practiceEngine.settleCall(c.id, {
+              const settledCall = practiceEngine.settleCall(c.id, {
                 isResolved: info.isResolved,
                 isVoided: info.isVoided,
                 winningOutcome: info.winningOutcome,
               });
+              botEngine.updateSettledCall(settledCall);
               setBankroll(practiceEngine.getBankroll());
             }
             updated = true;
           }
         } catch {
-          // Market still pending or not indexed
+          // Market still pending or awaiting oracle answer
         }
       }
 
       if (updated) {
         setCalls(practiceEngine.getCalls());
+        setBotTick((t) => t + 1);
       }
-    }, 10000);
+    }, 4000);
 
     return () => clearInterval(settlementInterval);
   }, [calls]);
@@ -157,6 +195,11 @@ export default function App() {
     }
   }
 
+  function handleBotConfigChange(updates: Partial<BotConfig>) {
+    botEngine.updateConfig(updates);
+    setBotTick((t) => t + 1);
+  }
+
   const currentScorecard: CalibrationScorecard = ScorecardService.computeScorecard(calls, mode);
 
   return (
@@ -167,7 +210,7 @@ export default function App() {
           <div className="brand-icon">BP</div>
           <div>
             <h1 className="brand-title">Book Pulse</h1>
-            <div className="brand-tagline">DreamDEX Event Contracts · Crowd Lean & Practice Surface</div>
+            <div className="brand-tagline">DreamDEX Event Contracts · Crowd Lean & Strategy Terminal</div>
           </div>
         </div>
 
@@ -227,6 +270,13 @@ export default function App() {
         >
           <Layers size={16} />
           Live Windows ({windows.length})
+        </button>
+        <button
+          className={`tab-btn ${activeTab === "bot" ? "active" : ""}`}
+          onClick={() => setActiveTab("bot")}
+        >
+          <Bot size={16} color={botEngine.getConfig().active ? "var(--up-color)" : undefined} />
+          Bot Terminal {botEngine.getConfig().active && <span className="pulse-dot" style={{ width: "6px", height: "6px" }}></span>}
         </button>
         <button
           className={`tab-btn ${activeTab === "scorecard" ? "active" : ""}`}
@@ -356,6 +406,14 @@ export default function App() {
             </div>
           )}
         </div>
+      )}
+
+      {/* Bot Terminal Tab */}
+      {activeTab === "bot" && (
+        <BotTerminal
+          botEngine={botEngine}
+          onConfigChange={handleBotConfigChange}
+        />
       )}
 
       {/* Scorecard Tab */}
