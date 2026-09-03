@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -13,8 +13,12 @@ import {
   Bot,
   X
 } from "lucide-react";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { useAccount, useWalletClient } from "wagmi";
 import { LiveDataLayer } from "../data/marketData.js";
 import { PracticeEngine } from "../engine/practiceEngine.js";
+import { RealEngine } from "../engine/realEngine.js";
+import { SettlementEngine } from "../engine/settlementEngine.js";
 import { ScorecardService } from "../scoring/scorecard.js";
 import { DEFAULT_BOT_CONFIGS, StrategyBotEngine } from "../bot/strategyEngine.js";
 import { BotTerminal } from "./BotTerminal.js";
@@ -33,19 +37,38 @@ const practiceEngine = new PracticeEngine({ initialBankroll: 1000, maxStakePerCa
 const botEngine = new StrategyBotEngine(DEFAULT_BOT_CONFIGS.fade_crowd, practiceEngine);
 
 export default function App() {
+  const { address, isConnected, chainId } = useAccount();
+  const { data: walletClient } = useWalletClient();
+
   const [mode, setMode] = useState<TradingMode>("practice");
   const [activeTab, setActiveTab] = useState<"markets" | "bot" | "scorecard" | "history">("markets");
   const [windows, setWindows] = useState<OpenWindow[]>([]);
   const [calls, setCalls] = useState<Call[]>([]);
   const [bankroll, setBankroll] = useState<number>(practiceEngine.getBankroll());
   const [loading, setLoading] = useState(true);
-  const [, setBotTick] = useState(0); // For forcing UI re-render when bot logs arrive
+  const [, setBotTick] = useState(0);
+
+  // Initialize RealEngine and SettlementEngine from wagmi walletClient
+  const realEngine = useMemo(() => {
+    if (isConnected && walletClient) {
+      return new RealEngine(dataLayer.client, { walletClient });
+    }
+    return null;
+  }, [isConnected, walletClient]);
+
+  const settlementEngine = useMemo(() => {
+    if (realEngine) {
+      return new SettlementEngine(dataLayer.client, { trader: (realEngine as any).trader });
+    }
+    return new SettlementEngine(dataLayer.client);
+  }, [realEngine]);
 
   // Call modal state
   const [selectedWindow, setSelectedWindow] = useState<OpenWindow | null>(null);
   const [selectedDirection, setSelectedDirection] = useState<CallDirection | null>(null);
   const [stakeAmount, setStakeAmount] = useState<number>(25);
   const [txError, setTxError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Transition modal state
   const [showTransitionModal, setShowTransitionModal] = useState<boolean>(false);
@@ -139,6 +162,9 @@ export default function App() {
               });
               botEngine.updateSettledCall(settledCall);
               setBankroll(practiceEngine.getBankroll());
+            } else {
+              // Real mode settlement evaluation
+              await settlementEngine.evaluateCallSettlement(c);
             }
             updated = true;
           }
@@ -148,13 +174,13 @@ export default function App() {
       }
 
       if (updated) {
-        setCalls(practiceEngine.getCalls());
+        setCalls([...calls]);
         setBotTick((t) => t + 1);
       }
     }, 4000);
 
     return () => clearInterval(settlementInterval);
-  }, [calls]);
+  }, [calls, settlementEngine]);
 
   function handleSwitchMode(newMode: TradingMode) {
     if (newMode === "real" && mode === "practice") {
@@ -176,22 +202,44 @@ export default function App() {
     setTxError(null);
   }
 
-  function executeCall() {
+  async function executeCall() {
     if (!selectedWindow || !selectedDirection) return;
     setTxError(null);
+    setIsSubmitting(true);
 
-    if (mode === "practice") {
-      try {
+    try {
+      if (mode === "practice") {
         const call = practiceEngine.placeCall(selectedWindow, selectedDirection, stakeAmount);
         setCalls(practiceEngine.getCalls());
         setBankroll(practiceEngine.getBankroll());
         setSelectedWindow(null);
-      } catch (err: any) {
-        setTxError(err.message || "Execution failed");
+      } else {
+        // Real Mode execution via connected wallet
+        if (!isConnected || !realEngine) {
+          throw new Error("Please connect your wallet on Somnia Testnet (50312) to trade in Real Mode.");
+        }
+        const call = await realEngine.placeCall(selectedWindow, selectedDirection, stakeAmount);
+        setCalls((prev) => [call, ...prev]);
+        setSelectedWindow(null);
       }
-    } else {
-      // Real mode direct wallet signing notice
-      setTxError("Real Mode: Connect your browser wallet (MetaMask/Rabby) on Somnia Testnet (50312) to sign directly.");
+    } catch (err: any) {
+      setTxError(err.message || "Execution failed");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  async function handleClaimWinnings(call: Call) {
+    if (!isConnected || !realEngine) {
+      alert("Please connect your wallet to claim winnings.");
+      return;
+    }
+    try {
+      await settlementEngine.redeemWinningCall(call);
+      setCalls([...calls]);
+      alert(`Winnings claimed successfully! Tx: ${call.redeemTxHash?.slice(0, 10)}...`);
+    } catch (err: any) {
+      alert(`Claim failed: ${err.message}`);
     }
   }
 
@@ -220,7 +268,7 @@ export default function App() {
             <span>Somnia Shannon (50312)</span>
           </div>
 
-          {/* Explicit Mode Toggle */}
+          {/* Mode Switcher */}
           <div className="mode-toggle-container">
             <button
               className={`mode-btn practice ${mode === "practice" ? "active" : ""}`}
@@ -238,27 +286,40 @@ export default function App() {
             </button>
           </div>
 
-          <div className="bankroll-card">
-            <span className="bankroll-label">
-              {mode === "practice" ? "Practice Bankroll" : "Connected Wallet"}
-            </span>
-            <span className="bankroll-val mono">
-              {mode === "practice" ? `$${bankroll.toFixed(2)} USDso` : "Direct Signing (Safe)"}
-            </span>
-          </div>
+          {/* Established RainbowKit Connect Button */}
+          <ConnectButton 
+            chainStatus="icon"
+            showBalance={{ smallScreen: false, largeScreen: true }}
+            accountStatus={{ smallScreen: "avatar", largeScreen: "full" }}
+          />
+
+          {mode === "practice" && (
+            <div className="bankroll-card">
+              <span className="bankroll-label">Practice Bankroll</span>
+              <span className="bankroll-val mono">${bankroll.toFixed(2)} USDso</span>
+            </div>
+          )}
         </div>
       </header>
 
-      {/* Transition Banner when in Real Mode */}
+      {/* Real Mode Notices */}
       {mode === "real" && (
         <div className="transition-banner">
           <ShieldCheck size={28} color="#10b981" />
-          <div>
-            <h4>Direct Wallet Signing Active</h4>
+          <div style={{ flex: 1 }}>
+            <h4>Direct Wallet Signing Active · 100% Self-Custodial</h4>
             <p>
-              By protocol design, Event Contracts feature no delegated session keys. Every real order signs directly from your wallet for 100% self-custodial safety.
+              By protocol design, Event Contracts feature no delegated session keys. Every real order signs directly from your wallet.
+              {!isConnected && (
+                <strong style={{ color: "var(--warning)", display: "block", marginTop: "0.25rem" }}>
+                  Please connect your wallet using the RainbowKit connector in the header.
+                </strong>
+              )}
             </p>
           </div>
+          {!isConnected && (
+            <ConnectButton />
+          )}
         </div>
       )}
 
@@ -543,10 +604,19 @@ export default function App() {
                       )}
                     </td>
                     <td>
-                      {c.mode === "real" && c.settlementStatus === "won" && !c.redeemed ? (
-                        <button className="claim-btn">Claim Winnings</button>
+                      {c.mode === "real" && (c.settlementStatus === "won" || c.settlementStatus === "voided") && !c.redeemed ? (
+                        <button className="claim-btn" onClick={() => handleClaimWinnings(c)}>
+                          Claim Winnings
+                        </button>
                       ) : c.redeemed ? (
-                        <span style={{ color: "var(--up-color)", fontSize: "0.75rem" }}>Claimed ✓</span>
+                        <a
+                          href={`https://shannon-explorer.somnia.network/tx/${c.redeemTxHash}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          style={{ color: "var(--up-color)", fontSize: "0.75rem", textDecoration: "none" }}
+                        >
+                          Claimed ✓
+                        </a>
                       ) : (
                         <span style={{ color: "var(--text-dim)", fontSize: "0.75rem" }}>-</span>
                       )}
@@ -638,13 +708,25 @@ export default function App() {
               </div>
             )}
 
-            <button
-              className={`call-btn ${selectedDirection === "UP" ? "btn-up" : "btn-down"}`}
-              style={{ width: "100%", padding: "0.9rem" }}
-              onClick={executeCall}
-            >
-              Confirm {selectedDirection} ({mode.toUpperCase()})
-            </button>
+            {mode === "real" && !isConnected ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", alignItems: "center" }}>
+                <p style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
+                  Connect your wallet to execute real trade
+                </p>
+                <ConnectButton />
+              </div>
+            ) : (
+              <button
+                className={`call-btn ${selectedDirection === "UP" ? "btn-up" : "btn-down"}`}
+                style={{ width: "100%", padding: "0.9rem" }}
+                onClick={executeCall}
+                disabled={isSubmitting}
+              >
+                {isSubmitting
+                  ? "Signing & Sending..."
+                  : `Confirm ${selectedDirection} (${mode.toUpperCase()})`}
+              </button>
+            )}
           </div>
         </div>
       )}
