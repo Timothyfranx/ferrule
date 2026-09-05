@@ -1,6 +1,7 @@
 export * from "./common/ModeBanner.js";
 export * from "./common/MobileBottomNav.js";
 export * from "./common/Header.js";
+export * from "./common/ConnectWalletButton.js";
 export * from "./common/Footer.js";
 export * from "./landing/LandingScreen.js";
 export * from "./landing/ModeSelectorModal.js";

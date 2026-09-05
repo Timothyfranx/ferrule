@@ -1,5 +1,5 @@
 import React from "react";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { ConnectWalletButton } from "./ConnectWalletButton.js";
 import { Layers, Terminal, Home, BarChart3, Clock, ShieldCheck, Zap } from "lucide-react";
 import type { TradingMode } from "../../types/index.js";
 
@@ -227,13 +227,9 @@ export function Header({
           <span className="text-text-primary text-[10px]">LIVE // 14ms</span>
         </div>
 
-        {/* RainbowKit Wallet Button */}
-        <div className="ml-2 scale-90 origin-right">
-          <ConnectButton
-            chainStatus="none"
-            showBalance={false}
-            accountStatus={{ smallScreen: "avatar", largeScreen: "address" }}
-          />
+        {/* Dedicated Web3 Wallet Connection & Network Switcher */}
+        <div className="ml-2">
+          <ConnectWalletButton />
         </div>
       </div>
     </header>

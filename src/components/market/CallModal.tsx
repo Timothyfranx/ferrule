@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { X, AlertTriangle } from "lucide-react";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { ConnectWalletButton } from "../common/ConnectWalletButton.js";
 import type { OpenWindow, CallDirection, TradingMode } from "../../types/index.js";
 
 interface CallModalProps {
@@ -137,7 +137,7 @@ export function CallModal({
           {!isPractice && !walletConnected ? (
             <div className="flex flex-col items-center gap-2 p-2 bg-bg-base border border-border-base">
               <span className="text-text-dim text-[11px]">Connect wallet to execute real trade:</span>
-              <ConnectButton />
+              <ConnectWalletButton />
             </div>
           ) : (
             <button
