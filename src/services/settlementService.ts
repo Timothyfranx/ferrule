@@ -1,15 +1,16 @@
 import { 
-  MarketsClient, 
   type Trader, 
-  type TraderConfig 
+  type TraderConfig,
+  type SomniaMarketsClient 
 } from "@somnia-chain/markets-sdk";
-import type { Call, SettledMarketInfo } from "../types/index.js";
+import type { Hex } from "viem";
+import type { Call } from "../types/index.js";
 
 export class SettlementService {
-  public readonly client: MarketsClient;
+  public readonly client: SomniaMarketsClient;
   public readonly trader?: Trader;
 
-  constructor(client: MarketsClient, config?: TraderConfig & { trader?: Trader }) {
+  constructor(client: SomniaMarketsClient, config?: TraderConfig & { trader?: Trader }) {
     this.client = client;
     this.trader = config?.trader ?? (config?.walletClient ? client.createTrader(config) : undefined);
   }
@@ -56,10 +57,13 @@ export class SettlementService {
       throw new Error("Trader instance required to submit on-chain redemption transaction.");
     }
 
-    const outcome = call.direction === "UP" ? 0 : 1;
+    const outcomeIdx = (call.direction === "UP" ? 0 : 1) as 0 | 1;
+    const amount = BigInt(Math.floor(call.contractsCount * 1e6));
+
     const res = await this.trader.redeem({
-      marketId: call.marketId as `0x${string}`,
-      outcome,
+      marketId: call.marketId as Hex,
+      amount,
+      outcomeIdx,
     });
 
     call.redeemed = true;
@@ -72,7 +76,9 @@ export class SettlementService {
    */
   async pokeOracle(oracleQuestionId: `0x${string}`): Promise<{ hash: string }> {
     if (!this.trader) throw new Error("Trader required to poke oracle");
-    const res = await this.trader.pokeOracle({ questionId: oracleQuestionId });
+    const res = await this.trader.pokeOracle({ 
+      oracleQuestionId: BigInt(oracleQuestionId) 
+    });
     return { hash: res.hash };
   }
 
@@ -81,7 +87,7 @@ export class SettlementService {
    */
   async voidExpired(marketId: `0x${string}`): Promise<{ hash: string }> {
     if (!this.trader) throw new Error("Trader required to void expired market");
-    const res = await this.trader.voidExpired({ marketId });
+    const res = await this.trader.voidExpired({ marketId: marketId as Hex });
     return { hash: res.hash };
   }
 }

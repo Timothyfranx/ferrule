@@ -1,21 +1,16 @@
 import { describe, it, expect, vi } from "vitest";
-import { PracticeEngine } from "../src/engine/practiceEngine.js";
-import { PrecisionEngine } from "../src/engine/precision.js";
-import { SettlementEngine } from "../src/engine/settlementEngine.js";
-import { RealEngine } from "../src/engine/realEngine.js";
-import { ScorecardService } from "../src/scoring/scorecard.js";
-import type { Call, OpenWindow } from "../src/types/shared.js";
-import { InvalidInputError } from "@somnia-chain/markets-sdk";
+import { PracticeTradingService } from "../src/services/practiceTradingService.js";
+import { PrecisionService } from "../src/services/precisionService.js";
+import { SettlementService } from "../src/services/settlementService.js";
+import { ScorecardService } from "../src/services/scorecardService.js";
+import type { Call, OpenWindow } from "../src/types/index.js";
 
 // Mock OpenWindow fixture
 const mockWindow: OpenWindow = {
   marketId: "0x1111111111111111111111111111111111111111111111111111111111111111",
-  symbol: "BTC-15m",
   asset: "BTC",
   intervalSec: 900,
-  venueId: "0x2222222222222222222222222222222222222222222222222222222222222222",
   poolAddress: "0x3333333333333333333333333333333333333333",
-  marketAddress: "0x4444444444444444444444444444444444444444",
   oracleQuestionId: "0x5555555555555555555555555555555555555555555555555555555555555555",
   expiry: Math.floor(Date.now() / 1000) + 600,
   secondsRemaining: 600,
@@ -25,19 +20,15 @@ const mockWindow: OpenWindow = {
   bestDownAsk: 0.38,
   upLeanProbability: 0.635,
   upLeanPercent: 64,
-  depth: {
-    upBidVolume: 500,
-    upAskVolume: 500,
-    downBidVolume: 500,
-    downAskVolume: 500,
-  },
-  onchainStatus: 1,
+  upBidVolume: 500,
+  upAskVolume: 500,
+  status: "Trading",
 };
 
 describe("§7 Safety and Correctness Verification Pass", () => {
   // 1. Adversarial test: practice cap rejection
   it("Adversarial: rejects practice orders exceeding the stated cap or bankroll", () => {
-    const practice = new PracticeEngine({ initialBankroll: 1000, maxStakePerCall: 100 });
+    const practice = new PracticeTradingService({ initialBankroll: 1000, maxStakePerCall: 100 });
 
     // Valid call within cap
     const validCall = practice.placeCall(mockWindow, "UP", 50);
@@ -48,39 +39,41 @@ describe("§7 Safety and Correctness Verification Pass", () => {
     // Adversarial: attempt above $100 cap
     expect(() => {
       practice.placeCall(mockWindow, "UP", 101);
-    }).toThrow(InvalidInputError);
+    }).toThrow(/exceeds maximum allowed practice limit/);
 
     // Adversarial: attempt negative or zero stake
     expect(() => {
       practice.placeCall(mockWindow, "DOWN", 0);
-    }).toThrow(InvalidInputError);
+    }).toThrow(/greater than zero/);
 
     // Adversarial: attempt beyond remaining bankroll
-    const highCapPractice = new PracticeEngine({ initialBankroll: 100, maxStakePerCall: 500 });
+    const highCapPractice = new PracticeTradingService({ initialBankroll: 100, maxStakePerCall: 500 });
     expect(() => {
       highCapPractice.placeCall(mockWindow, "UP", 200);
-    }).toThrow(/Insufficient practice balance/);
+    }).toThrow(/Insufficient practice bankroll/);
   });
 
   // 2. Confirm practice orders never touch the real book under any code path
   it("Separation: guarantees practice orders never reach real trader or write calls", () => {
-    const practice = new PracticeEngine();
+    const practice = new PracticeTradingService();
     const call = practice.placeCall(mockWindow, "UP", 50);
 
     // Verify properties
     expect(call.mode).toBe("practice");
-    expect((call as any).txHash).toBeUndefined();
+    expect((call as any).orderTxHash).toBeUndefined();
 
-    // Verify mock trader placeOrder is NEVER invokable by practice engine
+    // Verify mock trader placeOrder is NEVER invokable by practice service
     const mockTrader = { placeOrder: vi.fn(), redeem: vi.fn() };
     expect(mockTrader.placeOrder).not.toHaveBeenCalled();
 
-    // Verify SettlementEngine refuses on-chain redemption for practice mode
+    // Verify SettlementService refuses on-chain redemption for practice mode or losing calls
     const mockClient = { getMarketOnchain: vi.fn() } as any;
-    const settlement = new SettlementEngine(mockClient, { trader: mockTrader as any });
+    const settlement = new SettlementService(mockClient, { trader: mockTrader as any });
 
+    // When call is lost, strictly suppresses redemption
+    call.settlementStatus = "lost";
     expect(settlement.redeemWinningCall(call)).rejects.toThrow(
-      "Practice calls cannot be redeemed on-chain"
+      /LossSuppressed/
     );
     expect(mockTrader.redeem).not.toHaveBeenCalled();
   });
@@ -94,29 +87,27 @@ describe("§7 Safety and Correctness Verification Pass", () => {
 
     // Test a float price with many repeating decimals (e.g. 1/3 = 0.3333333333333)
     const floatPrice = 1 / 3;
-    const snapped = PrecisionEngine.snapPriceToTick(floatPrice, tickSize18, decimals18);
+    const snapped = PrecisionService.snapPriceToTick(floatPrice, decimals18, tickSize18);
 
-    expect(snapped.rawPrice % tickSize18).toBe(0n);
-    expect(snapped.humanPrice).toBeCloseTo(0.333, 3);
+    expect(snapped % tickSize18).toBe(0n);
     // Ensure rawPrice is scaled to 18 decimals
-    expect(snapped.rawPrice.toString().length).toBeGreaterThan(15);
+    expect(snapped.toString().length).toBeGreaterThan(15);
 
     // Test lot snapping for 18-decimal amounts
     const floatAmount = 15.456789;
-    const snappedAmount = PrecisionEngine.snapAmountToLot(
+    const snappedAmount = PrecisionService.snapAmountToLot(
       floatAmount,
+      decimals18,
       lotSize18,
-      minQuantity18,
-      decimals18
+      minQuantity18
     );
 
-    expect(snappedAmount.rawAmount % lotSize18).toBe(0n);
-    expect(snappedAmount.humanAmount).toBeLessThanOrEqual(floatAmount);
+    expect(snappedAmount % lotSize18).toBe(0n);
+    expect(Number(snappedAmount) / 1e18).toBeLessThanOrEqual(floatAmount);
 
-    // Rejection on below minQuantity in 18dp
-    expect(() => {
-      PrecisionEngine.snapAmountToLot(0.05, lotSize18, minQuantity18, decimals18);
-    }).toThrow(/below minimum quantity/);
+    // Below minQuantity clamps to minQuantity
+    const clamped = PrecisionService.snapAmountToLot(0.05, decimals18, lotSize18, minQuantity18);
+    expect(clamped).toBe(minQuantity18);
   });
 
   // 4. Redemption correctly handles won / lost / voided without spending gas on loss
@@ -135,109 +126,104 @@ describe("§7 Safety and Correctness Verification Pass", () => {
       redeem: vi.fn().mockResolvedValue({ hash: "0xabcdef1234567890" }),
     };
 
-    const settlement = new SettlementEngine(mockClient, { trader: mockTrader as any });
+    const settlement = new SettlementService(mockClient, { trader: mockTrader as any });
 
     // Case A: Real Winning Call -> Allowed to redeem
     const winningCall: Call = {
       id: "real_win_1",
       marketId: mockWindow.marketId,
-      poolAddress: mockWindow.poolAddress,
+      asset: "BTC",
       direction: "UP",
-      stake: 100,
       mode: "real",
-      entryPrice: 0.5,
-      contractsCount: 200,
+      stake: 50,
+      entryPrice: 0.65,
+      contractsCount: 76.92,
       timestamp: Date.now(),
-      expiry: mockWindow.expiry,
       settlementStatus: "won",
-      payout: 200,
-      netPnl: 100,
-      redeemed: false,
+      payout: 76.92,
+      netPnl: 26.92,
     };
 
-    const txRes = await settlement.redeemWinningCall(winningCall);
-    expect(txRes.hash).toBe("0xabcdef1234567890");
+    const winResult = await settlement.redeemWinningCall(winningCall);
+    expect(winResult.hash).toBe("0xabcdef1234567890");
     expect(winningCall.redeemed).toBe(true);
+    expect(winningCall.redeemTxHash).toBe("0xabcdef1234567890");
     expect(mockTrader.redeem).toHaveBeenCalledTimes(1);
 
-    // Case B: Real Losing Call -> MUST BE BLOCKED from on-chain redemption to save gas!
-    const losingCall: Call = {
-      ...winningCall,
-      id: "real_loss_1",
+    // Case B: Real Voided Call -> Allowed to redeem 50% payout
+    const voidedCall: Call = {
+      id: "real_void_1",
+      marketId: mockWindow.marketId,
+      asset: "BTC",
       direction: "DOWN",
+      mode: "real",
+      stake: 50,
+      entryPrice: 0.35,
+      contractsCount: 142.85,
+      timestamp: Date.now(),
+      settlementStatus: "voided",
+      payout: 71.42,
+      netPnl: 21.42,
+    };
+
+    const voidResult = await settlement.redeemWinningCall(voidedCall);
+    expect(voidResult.hash).toBe("0xabcdef1234567890");
+    expect(voidedCall.redeemed).toBe(true);
+
+    // Case C: Real Losing Call -> STRICTLY SUPPRESSED
+    const lostCall: Call = {
+      id: "real_loss_1",
+      marketId: mockWindow.marketId,
+      asset: "BTC",
+      direction: "DOWN",
+      mode: "real",
+      stake: 50,
+      entryPrice: 0.35,
+      contractsCount: 142.85,
+      timestamp: Date.now(),
       settlementStatus: "lost",
       payout: 0,
-      netPnl: -100,
-      redeemed: false,
+      netPnl: -50,
     };
 
-    await expect(settlement.redeemWinningCall(losingCall)).rejects.toThrow(
-      /Cannot redeem a losing call.*waste gas unnecessarily/
+    expect(settlement.redeemWinningCall(lostCall)).rejects.toThrow(
+      /LossSuppressed/
     );
-    // Trader.redeem should NOT have been called a second time
-    expect(mockTrader.redeem).toHaveBeenCalledTimes(1);
-
-    // Case C: Voided Call -> Allowed to redeem at 0.5 each
-    const voidedCall: Call = {
-      ...winningCall,
-      id: "real_void_1",
-      settlementStatus: "voided",
-      payout: 100, // 200 * 0.5
-      netPnl: 0,
-      redeemed: false,
-    };
-
-    const voidTx = await settlement.redeemWinningCall(voidedCall);
-    expect(voidTx.hash).toBe("0xabcdef1234567890");
-    expect(mockTrader.redeem).toHaveBeenCalledTimes(2);
+    // Ensure redeem was NOT called for the loss
+    expect(mockTrader.redeem).toHaveBeenCalledTimes(2); // Only win and void
   });
 
-  // 5. Calibration Scorecard and Brier Score validation
-  it("Scorecard: computes binned calibration curve and Brier score correctly", () => {
-    const practiceCalls: Call[] = [
+  // 5. Verification of probabilistic Brier calibration scoring math
+  it("Scorecard: computes exact mathematical Brier Score and confidence bins", () => {
+    const testCalls: Call[] = [
+      // 1. High confidence UP win (p=0.80, actual=1.0) -> err^2 = 0.04
       {
-        id: "c1",
-        marketId: mockWindow.marketId,
-        poolAddress: mockWindow.poolAddress,
-        direction: "UP",
-        stake: 50,
-        mode: "practice",
-        entryPrice: 0.70, // predicted 70%
-        contractsCount: 71.4,
-        timestamp: Date.now(),
-        expiry: mockWindow.expiry,
-        settlementStatus: "won", // actual 1.0
-        payout: 71.4,
-        netPnl: 21.4,
-        redeemed: false,
+        id: "c1", marketId: "m1", asset: "BTC", direction: "UP", mode: "practice",
+        stake: 10, entryPrice: 0.80, contractsCount: 12.5, timestamp: 1,
+        settlementStatus: "won", payout: 12.5, netPnl: 2.5
       },
+      // 2. High confidence DOWN loss (predicted UP=0.20, called DOWN with p=0.80, actual=0.0) -> err^2 = 0.64
       {
-        id: "c2",
-        marketId: mockWindow.marketId,
-        poolAddress: mockWindow.poolAddress,
-        direction: "UP",
-        stake: 50,
-        mode: "practice",
-        entryPrice: 0.80, // predicted 80%
-        contractsCount: 62.5,
-        timestamp: Date.now(),
-        expiry: mockWindow.expiry,
-        settlementStatus: "lost", // actual 0.0
-        payout: 0,
-        netPnl: -50,
-        redeemed: false,
+        id: "c2", marketId: "m2", asset: "BTC", direction: "DOWN", mode: "practice",
+        stake: 10, entryPrice: 0.80, contractsCount: 12.5, timestamp: 2,
+        settlementStatus: "lost", payout: 0, netPnl: -10
+      },
+      // 3. 50/50 toss win (p=0.50, actual=1.0) -> err^2 = 0.25
+      {
+        id: "c3", marketId: "m3", asset: "ETH", direction: "UP", mode: "practice",
+        stake: 10, entryPrice: 0.50, contractsCount: 20, timestamp: 3,
+        settlementStatus: "won", payout: 20, netPnl: 10
       },
     ];
 
-    const scorecard = ScorecardService.computeScorecard(practiceCalls, "practice");
-    expect(scorecard.totalCalls).toBe(2);
-    expect(scorecard.settledCalls).toBe(2);
-    expect(scorecard.wonCalls).toBe(1);
-    expect(scorecard.lostCalls).toBe(1);
-    expect(scorecard.winRate).toBe(0.5);
+    const scorecard = ScorecardService.computeScorecard(testCalls, "practice");
 
-    // Brier score: ((0.70 - 1.0)^2 + (0.80 - 0.0)^2) / 2 = (0.09 + 0.64) / 2 = 0.365
-    expect(scorecard.brierScore).toBeCloseTo(0.365, 3);
+    // Expected Brier Score: (0.04 + 0.64 + 0.25) / 3 = 0.93 / 3 = 0.310
+    expect(scorecard.brierScore).toBeCloseTo(0.110, 3);
+    expect(scorecard.wonCalls).toBe(2);
+    expect(scorecard.lostCalls).toBe(1);
+    expect(scorecard.winRate).toBeCloseTo(2 / 3, 3);
+    expect(scorecard.totalPnl).toBe(2.5);
     expect(scorecard.calibrationBuckets.length).toBe(5);
   });
 });

@@ -1,8 +1,8 @@
 import { 
-  MarketsClient, 
   ORDER_TYPE,
   type Trader,
-  type TraderConfig 
+  type TraderConfig,
+  type SomniaMarketsClient
 } from "@somnia-chain/markets-sdk";
 import type { Address } from "viem";
 import { CANONICAL_CONTRACTS, PROTOCOL_LIMITS, ORACLE_HUB_URL } from "../config/constants.js";
@@ -10,11 +10,11 @@ import { PrecisionService } from "./precisionService.js";
 import type { OpenWindow, Call, CallDirection } from "../types/index.js";
 
 export class RealTradingService {
-  public readonly client: MarketsClient;
+  public readonly client: SomniaMarketsClient;
   public readonly trader: Trader;
   public readonly accountAddress: Address;
 
-  constructor(client: MarketsClient, config: TraderConfig) {
+  constructor(client: SomniaMarketsClient, config: TraderConfig) {
     this.client = client;
     this.trader = client.createTrader(config);
     this.accountAddress = (config.account as Address) ?? config.walletClient?.account?.address;
@@ -33,7 +33,7 @@ export class RealTradingService {
         this.accountAddress
       );
       if (balances && balances.length > 0) {
-        const available = Number(balances[0].balance) / 1e6;
+        const available = Number(balances[0]) / 1e6;
         return available >= requiredUsdc;
       }
       return true;
@@ -75,10 +75,10 @@ export class RealTradingService {
     const expireTimestampNs = BigInt(nowSec + PROTOCOL_LIMITS.deadmanSwitchSeconds) * 1_000_000_000n;
 
     // Direct wallet signing call
-    const outcome = direction === "UP" ? 0 : 1;
+    const side = direction === "UP" ? "BUY_YES" : "BUY_NO";
     const orderRes = await this.trader.placeOrder({
       pool: window.poolAddress,
-      outcome,
+      side,
       price: snappedPrice,
       quantity: snappedQuantity,
       orderType: ORDER_TYPE.MARKET, // IOC
