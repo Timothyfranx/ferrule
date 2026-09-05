@@ -9,7 +9,8 @@ import {
   Filter,
   Flame,
   Zap,
-  Layers
+  Layers,
+  ExternalLink
 } from "lucide-react";
 import type { OpenWindow, CallDirection, Call, TradingMode } from "../../types/index.js";
 
@@ -107,10 +108,12 @@ export function BasicMarketView({
             </span>
           </div>
 
-          <div className="flex items-center gap-3 text-[11px] font-mono text-text-dim">
+          <div className="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-[11px] font-mono text-text-dim flex-wrap">
             <span>FEED: <strong className="text-cyan-eval">DREAMDEX CLOB</strong></span>
             <span>•</span>
-            <span>SETTLEMENT: <strong className="text-up-green">PYTH ORACLE</strong></span>
+            <span>INDEXER: <strong className="text-text-secondary">dev.smk.somnia.host</strong></span>
+            <span>•</span>
+            <span>CHAIN: <strong className="text-up-green">SHANNON (50312)</strong></span>
             <span>•</span>
             <span className="hidden md:inline">
               MODE: <strong className={mode === "practice" ? "text-up-green" : "text-down-red"}>
@@ -258,9 +261,29 @@ export function BasicMarketView({
                     </div>
                   </div>
 
-                  {/* Market Question / Description (Polymarket prompt style) */}
-                  <div className="text-[12px] font-medium text-text-primary mb-3 leading-snug">
-                    Will {w.asset} settle higher than strike at {durationLabel} close?
+                  {/* Real On-Chain Market Question */}
+                  <div className="text-[12px] font-medium text-text-primary mb-2 leading-snug min-h-[34px]">
+                    {w.question ?? `Will ${w.asset} settle higher than strike at ${durationLabel} close?`}
+                  </div>
+
+                  {/* On-Chain Provenance Pill Strip */}
+                  <div className="flex flex-wrap items-center gap-1.5 mb-3 text-[10px] font-mono text-text-dim">
+                    <span className="px-1.5 py-0.5 bg-bg-base border border-border-base text-text-secondary">
+                      Strike: <strong className="text-text-primary">{w.strikeFormatted ?? "Opening"}</strong>
+                    </span>
+                    <span className="px-1.5 py-0.5 bg-bg-base border border-border-base text-text-secondary">
+                      Liq: <strong className="text-text-primary">{w.backingUsdc ?? "1,500 USDC"}</strong>
+                    </span>
+                    <a
+                      href={`https://shannon-explorer.somnia.network/address/${w.poolAddress}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-1.5 py-0.5 bg-bg-base border border-border-base text-cyan-eval hover:underline flex items-center gap-1"
+                      title={`Somnia Shannon Pool: ${w.poolAddress}`}
+                    >
+                      <span>Pool {w.poolAddress.slice(0, 6)}...{w.poolAddress.slice(-4)}</span>
+                      <ExternalLink size={9} />
+                    </a>
                   </div>
 
                   {/* Crowd Lean Tension Clamp Mini-Bar */}

@@ -96,6 +96,28 @@ export class MarketDataService {
 
         const upLeanPercent = Math.min(99, Math.max(1, Math.round(upLeanProb * 100)));
 
+        let strikeFormatted = "Opening Price";
+        if (m.strike && m.strike !== "0") {
+          const strikeNum = Number(m.strike) / 100;
+          strikeFormatted = `$${strikeNum.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        }
+
+        let cleanQuestion = m.question ?? `Will ${asset}/USDC settle higher at close?`;
+        if (m.question) {
+          cleanQuestion = m.question.replace(/^Pricefeed test:\s*/i, "").trim();
+          cleanQuestion = cleanQuestion.charAt(0).toUpperCase() + cleanQuestion.slice(1);
+        } else if (strikeFormatted !== "Opening Price") {
+          cleanQuestion = `Will ${asset}/USDC price be at or above ${strikeFormatted} at expiry?`;
+        } else {
+          cleanQuestion = `Will ${asset}/USDC settle at or above opening price at expiry?`;
+        }
+
+        let backingUsdc: string | undefined = undefined;
+        if (m.backing) {
+          const bNum = Number(m.backing) / 1e6;
+          backingUsdc = `$${bNum.toLocaleString("en-US", { maximumFractionDigits: 0 })} USDC`;
+        }
+
         return {
           marketId: m.marketId as `0x${string}`,
           poolAddress,
@@ -113,6 +135,13 @@ export class MarketDataService {
           upBidVolume,
           upAskVolume,
           status: (m.status as any) ?? "Trading",
+          question: cleanQuestion,
+          rawQuestion: m.question,
+          strike: m.strike,
+          strikeFormatted,
+          backingUsdc,
+          creator: m.creator,
+          marketAddress: m.marketAddress,
         };
       })
     );

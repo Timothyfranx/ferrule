@@ -274,7 +274,20 @@ SHELL & SCRIPT UTILITIES:
 
       return [
         { id: `line_${Date.now()}_1`, type: "system", text: `[SYS] Querying Somnia Pool (${w.poolAddress})...`, timestamp: now },
-        { id: `line_${Date.now()}_2`, type: "output", text: `MARKET ID: ${w.marketId}\nASSET: ${w.asset}/USDC | INTERVAL: ${w.intervalSec}s | EXPIRY: ${w.secondsRemaining}s remaining\nCROWD LEAN: ${w.upLeanPercent}% UP (${w.upLeanProbability.toFixed(3)})\nYES/UP BOOK: Best Bid: ${w.bestUpBid?.toFixed(3) ?? "-"} | Best Ask: ${w.bestUpAsk?.toFixed(3) ?? "-"} (Vol: ${w.upBidVolume})\nNO/DOWN BOOK: Best Bid: ${w.bestDownBid?.toFixed(3) ?? "-"} | Best Ask: ${w.bestDownAsk?.toFixed(3) ?? "-"} (Vol: ${w.upAskVolume})`, timestamp: now },
+        { 
+          id: `line_${Date.now()}_2`, 
+          type: "output", 
+          text: `MARKET ID: ${w.marketId}
+CONTRACT POOL: ${w.poolAddress}
+ORACLE QUESTION ID: ${w.oracleQuestionId ?? "N/A"}
+QUESTION: "${w.question ?? "N/A"}"
+STRIKE: ${w.strikeFormatted ?? "Opening Price"} | BACKING: ${w.backingUsdc ?? "1,500 USDC"}
+ASSET: ${w.asset}/USDC | INTERVAL: ${w.intervalSec}s | EXPIRY: ${w.secondsRemaining}s remaining
+CROWD LEAN: ${w.upLeanPercent}% UP (${w.upLeanProbability.toFixed(3)})
+YES/UP BOOK: Best Bid: ${w.bestUpBid?.toFixed(3) ?? "-"} | Best Ask: ${w.bestUpAsk?.toFixed(3) ?? "-"} (Vol: ${w.upBidVolume})
+NO/DOWN BOOK: Best Bid: ${w.bestDownBid?.toFixed(3) ?? "-"} | Best Ask: ${w.bestDownAsk?.toFixed(3) ?? "-"} (Vol: ${w.upAskVolume})`, 
+          timestamp: now 
+        },
       ];
     }
 

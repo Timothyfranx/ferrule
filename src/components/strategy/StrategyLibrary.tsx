@@ -37,17 +37,17 @@ interface StrategyLibraryProps {
 const INITIAL_STRATEGIES: StrategyRule[] = [
   {
     id: "strat_1",
-    name: "BTC-15m-LeanWatcher",
+    name: "BTC-5m-MomentumLean",
     symbol: "BTC",
     category: "MOMENTUM",
     status: "running",
     pid: 401,
-    lastTrigger: "14m ago",
-    ruleCode: "watch BTC-15m if lean >= 0.65 AND spread < 0.005 then suggest stake 250 up",
-    totalEvals: 1420,
-    hits: 89,
-    hitRate: 64.2,
-    sparkline: [18, 16, 20, 10, 14, 8, 12, 4, 8, 3, 5],
+    lastTrigger: "2m ago",
+    ruleCode: "watch BTC-5m if lean >= 0.65 then suggest stake 50 up",
+    totalEvals: 42,
+    hits: 28,
+    hitRate: 66.7,
+    sparkline: [10, 12, 14, 15, 12, 16, 18, 17, 20, 22],
   },
   {
     id: "strat_2",
@@ -55,69 +55,41 @@ const INITIAL_STRATEGIES: StrategyRule[] = [
     symbol: "ETH",
     category: "CONTRARIAN",
     status: "running",
-    pid: 404,
-    lastTrigger: "3m ago",
-    ruleCode: "watch ETH-5m if dev_sigma >= 2.4 AND book_skew <= -0.40 then suggest stake 150 down",
-    totalEvals: 964,
-    hits: 62,
-    hitRate: 68.1,
-    sparkline: [22, 20, 14, 16, 12, 8, 10, 6, 8, 4],
+    pid: 402,
+    lastTrigger: "4m ago",
+    ruleCode: "watch ETH-5m if lean <= 0.35 then suggest stake 50 up",
+    totalEvals: 38,
+    hits: 24,
+    hitRate: 63.2,
+    sparkline: [15, 14, 12, 10, 14, 16, 15, 18, 16, 19],
   },
   {
     id: "strat_3",
-    name: "SOL-15m-Breakout",
-    symbol: "SOL",
-    category: "VOLATILITY",
+    name: "BTC-1h-TrendFollow",
+    symbol: "BTC",
+    category: "TREND",
     status: "running",
-    pid: 412,
-    lastTrigger: "58m ago",
-    ruleCode: "watch SOL-15m if volume_burst >= 3.2x AND oracle_delta > +0.85% then suggest stake 300 up",
-    totalEvals: 812,
-    hits: 47,
-    hitRate: 59.3,
-    sparkline: [15, 12, 18, 11, 14, 9, 13, 7, 10, 6],
+    pid: 403,
+    lastTrigger: "18m ago",
+    ruleCode: "watch BTC-1h if lean >= 0.70 then suggest stake 100 up",
+    totalEvals: 29,
+    hits: 21,
+    hitRate: 72.4,
+    sparkline: [12, 10, 15, 8, 11, 14, 16, 18, 19, 21],
   },
   {
     id: "strat_4",
-    name: "AVAX-1h-TrendFollow",
-    symbol: "AVAX",
-    category: "TREND",
-    status: "running",
-    pid: 429,
-    lastTrigger: "2h 11m ago",
-    ruleCode: "watch AVAX-1h if ema_cross == bullish AND vwap_dist < 0.002 then suggest stake 100 up",
-    totalEvals: 512,
-    hits: 29,
-    hitRate: 72.4,
-    sparkline: [12, 10, 15, 8, 11, 6, 9, 4, 7, 3],
-  },
-  {
-    id: "strat_5",
-    name: "ETH-15m-VolatilityCompression",
+    name: "ETH-1h-RangeBound",
     symbol: "ETH",
     category: "SQUEEZE",
     status: "paused",
     pid: undefined,
-    lastTrigger: "PAUSED (RE-CALIBRATING)",
-    ruleCode: "watch ETH-15m if bb_width <= 0.012 AND rsi_14 between [48, 52] then suggest stake 100 neutral",
-    totalEvals: 740,
-    hits: 21,
-    hitRate: 47.6,
-    sparkline: [14, 14, 15, 15, 16, 16, 15, 16, 17, 16],
-  },
-  {
-    id: "strat_6",
-    name: "BTC-5m-HighConfidenceSpike",
-    symbol: "BTC",
-    category: "TAIL-RISK",
-    status: "paused",
-    pid: undefined,
     lastTrigger: "PAUSED (MANUAL)",
-    ruleCode: "watch BTC-5m if taker_imbalance >= 0.82 AND funding_rate <= -0.02% then suggest stake 500 up",
-    totalEvals: 444,
-    hits: 18,
-    hitRate: 50.0,
-    sparkline: [16, 15, 14, 15, 13, 14, 12, 13, 11, 12],
+    ruleCode: "watch ETH-1h if lean between [0.45, 0.55] then suggest stake 25 down",
+    totalEvals: 16,
+    hits: 9,
+    hitRate: 56.3,
+    sparkline: [14, 14, 15, 15, 16, 16, 15, 16, 17, 16],
   },
 ];
 
@@ -238,7 +210,11 @@ export function StrategyLibrary({
     }
   }
 
-  const oracleRound = windows.length > 0 ? windows[0].marketId.slice(0, 10) : "1044-SOL-PYTH";
+  const primaryWin = windows[0];
+  const oracleRound = primaryWin
+    ? (primaryWin.oracleQuestionId ? primaryWin.oracleQuestionId.slice(0, 10) : primaryWin.marketId.slice(0, 10))
+    : "PYTH-SHANNON";
+  const activeCadence = primaryWin ? `${primaryWin.intervalSec}s (${Math.round(primaryWin.intervalSec / 60)}M)` : "300s (5M)";
 
   return (
     <div className="flex-1 flex flex-col bg-bg-base overflow-y-auto pb-16 sm:pb-4">
@@ -251,7 +227,7 @@ export function StrategyLibrary({
           </span>
           <span className="text-text-dim">•</span>
           <span className="text-text-primary">
-            CADENCE: <span className="text-text-primary font-medium">300s (5M)</span>
+            CADENCE: <span className="text-text-primary font-medium">{activeCadence}</span>
           </span>
           <span className="text-text-dim">•</span>
           <span>

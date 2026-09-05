@@ -30,6 +30,16 @@ export function WindowCard({ window: w, onSelectCall }: WindowCardProps) {
         </div>
       </div>
 
+      {/* Real On-Chain Question & Strike */}
+      <div className="font-mono text-[12px] text-text-primary mb-1">
+        {w.question ?? `Will ${w.asset} settle higher at close?`}
+      </div>
+      <div className="flex items-center gap-2 text-[10px] font-mono text-text-dim mb-2">
+        <span>Strike: <strong className="text-text-primary">{w.strikeFormatted ?? "Opening"}</strong></span>
+        <span>•</span>
+        <span>Pool Liq: <strong className="text-text-primary">{w.backingUsdc ?? "1,500 USDC"}</strong></span>
+      </div>
+
       {/* Crowd Lean Gauge */}
       <div className="my-2">
         <div className="flex items-center justify-between text-[11px] font-mono mb-1">

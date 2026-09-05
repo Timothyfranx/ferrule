@@ -33,6 +33,13 @@ export interface OpenWindow {
   upBidVolume: number;
   upAskVolume: number;
   status: "Listed" | "Trading" | "Locked" | "Settling" | "Resolved" | "Voided" | "Finalized";
+  question?: string;
+  rawQuestion?: string;
+  strike?: string;
+  strikeFormatted?: string;
+  backingUsdc?: string;
+  creator?: string | null;
+  marketAddress?: string | null;
 }
 
 export interface SettledMarketInfo {
