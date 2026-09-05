@@ -1,0 +1,108 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Strict flat terminal styling - No gradients, no glows, no rounded bubbles */
+* {
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  background-color: #0a0a0f;
+  color: #f0f0f5;
+  font-family: 'JetBrains Mono', monospace;
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Blinking block terminal cursor */
+@keyframes blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+.term-cursor {
+  display: inline-block;
+  width: 8px;
+  height: 16px;
+  background-color: #f0f0f5;
+  vertical-align: middle;
+  margin-left: 2px;
+  animation: blink 1s infinite steps(1);
+}
+
+/* Scrollbar tailored like real VS Code / iTerm */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0a0f;
+}
+::-webkit-scrollbar-thumb {
+  background: #1b1b26;
+  border: 1px solid #0a0a0f;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #28283a;
+}
+
+/* Tab Bar styling */
+.tab-active {
+  background: #0a0a0f;
+  border-top: 2px solid #00e676;
+  color: #f0f0f5;
+  border-bottom: 1px solid #0a0a0f;
+}
+
+.tab-active-real {
+  background: #0a0a0f;
+  border-top: 2px solid #ff5252;
+  color: #f0f0f5;
+  border-bottom: 1px solid #0a0a0f;
+}
+
+.tab-inactive {
+  background: #12121a;
+  border-top: 2px solid transparent;
+  color: #6b6b7a;
+  border-bottom: 1px solid #23232f;
+}
+.tab-inactive:hover {
+  background: #161622;
+  color: #9a9aab;
+}
+
+/* Prompt glyph */
+.glyph-prompt {
+  color: #00e676;
+  user-select: none;
+  font-weight: 600;
+}
+
+.glyph-prompt-real {
+  color: #ff5252;
+  user-select: none;
+  font-weight: 600;
+}
+
+/* Selection highlight */
+::selection {
+  background: #232338;
+  color: #00e676;
+}
+
+/* RainbowKit Overrides for Flat Strict Dark Terminal */
+.iekbcc0 {
+  font-family: 'JetBrains Mono', monospace !important;
+}
+
+/* Tabular figures across all numerical feeds */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
