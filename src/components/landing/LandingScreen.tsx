@@ -43,7 +43,7 @@ export function LandingScreen({
   const primaryWindow = windows.length > 0 ? windows[0] : null;
 
   return (
-    <div className="flex-1 overflow-y-auto bg-bg-base text-text-primary select-text">
+    <div className="flex-1 overflow-y-auto bg-bg-base text-text-primary select-text pb-20 sm:pb-8">
       {/* 1. Hero Section (Stitch Design: ferrule_landing_page/code.html) */}
       <section className="w-full border-b border-border-flat pt-10 sm:pt-14 pb-14 px-4 sm:px-6 flex flex-col items-center">
         <div className="w-full max-w-4xl mx-auto flex flex-col items-center text-center">

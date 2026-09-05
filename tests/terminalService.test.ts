@@ -115,6 +115,20 @@ describe("TerminalService — Shell & Script Interpreter", () => {
     // 5. rm /clob/custom.sh
     const rmRes = await terminal.executeCommand("rm /clob/custom.sh", context);
     expect(rmRes[0].text).toContain("[FS] Removed: /clob/custom.sh");
+
+    // 6. pwd and cd
+    const pwdRes = await terminal.executeCommand("pwd", context);
+    expect(pwdRes[0].text).toBe("/");
+
+    const cdRes = await terminal.executeCommand("cd clob", context);
+    expect(cdRes[0].text).toBe("cwd: /clob");
+
+    const cdBack = await terminal.executeCommand("cd ..", context);
+    expect(cdBack[0].text).toBe("cwd: /");
+
+    // 7. resetfs
+    const resetRes = await terminal.executeCommand("resetfs", context);
+    expect(resetRes[0].text).toContain("Virtual filesystem reset");
   });
 });
 

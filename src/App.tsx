@@ -21,7 +21,9 @@ import {
   MarketGrid, 
   CallModal, 
   CalibrationDashboard, 
-  PositionsTable 
+  PositionsTable,
+  StrategyLibrary,
+  MobileBottomNav
 } from "./components/index.js";
 import { CANONICAL_CONTRACTS } from "./config/constants.js";
 import type { 
@@ -42,7 +44,7 @@ export default function App() {
   const [mode, setMode] = useState<TradingMode>("practice");
   const [currentView, setCurrentView] = useState<AppView>("landing");
   const [basicTab, setBasicTab] = useState<"markets" | "scorecard" | "positions">("markets");
-  const [terminalTab, setTerminalTab] = useState<"terminal" | "markets" | "scorecard" | "positions">("terminal");
+  const [terminalTab, setTerminalTab] = useState<"terminal" | "markets" | "strategy" | "scorecard" | "positions">("terminal");
   const [showModeSelector, setShowModeSelector] = useState(false);
 
   const [windows, setWindows] = useState<OpenWindow[]>([]);
@@ -345,6 +347,18 @@ export default function App() {
               </div>
             )}
 
+            {terminalTab === "strategy" && (
+              <StrategyLibrary
+                mode={mode}
+                windows={windows}
+                bankroll={practiceService.getBankroll()}
+                realBalance={realUsdcBalance}
+                onOpenTerminalWithCommand={(_cmd) => {
+                  setTerminalTab("terminal");
+                }}
+              />
+            )}
+
             {terminalTab === "scorecard" && (
               <div className="flex-1 overflow-y-auto">
                 <CalibrationDashboard
@@ -367,8 +381,22 @@ export default function App() {
         )}
       </div>
 
-      {/* 4. Footer (VS Code Status Strip) */}
-      <Footer mode={mode} accountAddress={address} />
+      {/* 4. Footer (VS Code Status Strip - hidden on mobile in favor of bottom nav) */}
+      <div className="hidden sm:block">
+        <Footer mode={mode} accountAddress={address} />
+      </div>
+
+      {/* 5. Mobile Bottom Navigation Bar (Stitch Ref v3 Mobile Cockpit) */}
+      <MobileBottomNav
+        currentView={currentView}
+        onChangeView={setCurrentView}
+        basicTab={basicTab}
+        onChangeBasicTab={setBasicTab}
+        terminalTab={terminalTab}
+        onChangeTerminalTab={setTerminalTab}
+        mode={mode}
+        positionsCount={positionsCount}
+      />
 
       {/* Trade Review & Confirmation Modal */}
       {tradeModal && (

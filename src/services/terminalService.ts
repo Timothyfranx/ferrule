@@ -14,35 +14,122 @@ import { ScorecardService } from "./scorecardService.js";
 export class TerminalService {
   private virtualFs: Map<string, VirtualFile> = new Map();
   private commandHistory: string[] = [];
+  private cwd: string = "/";
+  private static readonly STORAGE_KEY = "ferrule_virtual_fs_v1";
 
   constructor() {
     this.initVirtualFs();
   }
 
   private initVirtualFs() {
+    // Attempt hydration from localStorage
+    if (typeof window !== "undefined" && window.localStorage) {
+      try {
+        const stored = window.localStorage.getItem(TerminalService.STORAGE_KEY);
+        if (stored) {
+          const parsed: [string, VirtualFile][] = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            this.virtualFs = new Map(parsed);
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn("Could not load virtual FS from localStorage:", err);
+      }
+    }
+
+    this.seedDefaultFs();
+  }
+
+  private seedDefaultFs() {
+    this.virtualFs.clear();
+
+    // Default Directories
+    this.virtualFs.set("/strategies", {
+      path: "/strategies",
+      description: "Directory — Automated Strategy Scripts",
+      content: "",
+      isDirectory: true,
+    });
+
+    this.virtualFs.set("/config", {
+      path: "/config",
+      description: "Directory — System & Network Config",
+      content: "",
+      isDirectory: true,
+    });
+
+    // Default Files
     this.virtualFs.set("/strategies/fade_crowd.sh", {
       path: "/strategies/fade_crowd.sh",
       description: "Contrarian Fade Strategy — Fades overbought crowd lean (>80%)",
       content: `# Contrarian Fade Strategy\n# Fades overbought crowd lean (>80%) into binary close\nwatch BTC-300s if lean>=0.80 then suggest stake 100 down`,
+      isDirectory: false,
     });
 
     this.virtualFs.set("/strategies/momentum.sh", {
       path: "/strategies/momentum.sh",
       description: "Momentum Breakout Strategy — Rides directional sentiment (>70%)",
       content: `# Momentum Breakout Strategy\n# Rides strong directional sentiment (>70%)\nwatch ETH-300s if lean>=0.70 then suggest stake 50 up`,
+      isDirectory: false,
     });
 
     this.virtualFs.set("/strategies/rebound.sh", {
       path: "/strategies/rebound.sh",
       description: "Oversold Rebound Strategy — Buys beaten-down probability (<25%)",
       content: `# Oversold Rebound Strategy\n# Asymmetric upside entry on oversold book\nwatch BTC-300s if lean<=0.25 then suggest stake 25 up`,
+      isDirectory: false,
     });
 
     this.virtualFs.set("/config/env.sh", {
       path: "/config/env.sh",
       description: "Runtime Network Environment Configuration",
       content: `CHAIN_ID=${SOMNIA_CHAIN_ID}\nNETWORK="Somnia Shannon Testnet"\nCLOB="DreamDEX Event Contracts"\nMODULE="${CANONICAL_CONTRACTS.binaryMarketsModule}"\nCOLLATERAL="${CANONICAL_CONTRACTS.testUsdc}"`,
+      isDirectory: false,
     });
+
+    this.saveVirtualFs();
+  }
+
+  public saveVirtualFs() {
+    if (typeof window !== "undefined" && window.localStorage) {
+      try {
+        const entries = Array.from(this.virtualFs.entries());
+        window.localStorage.setItem(TerminalService.STORAGE_KEY, JSON.stringify(entries));
+      } catch (err) {
+        console.warn("Could not persist virtual FS to localStorage:", err);
+      }
+    }
+  }
+
+  public getCwd(): string {
+    return this.cwd;
+  }
+
+  public getVirtualFiles(): VirtualFile[] {
+    return Array.from(this.virtualFs.values());
+  }
+
+  /**
+   * Normalizes absolute and relative paths given the current working directory.
+   */
+  public resolvePath(targetPath: string): string {
+    let clean = targetPath.trim();
+    if (!clean.startsWith("/")) {
+      clean = this.cwd === "/" ? `/${clean}` : `${this.cwd}/${clean}`;
+    }
+    // Normalize segment traversal (., ..)
+    const segments = clean.split("/").filter(Boolean);
+    const resolved: string[] = [];
+    for (const seg of segments) {
+      if (seg === ".") continue;
+      if (seg === "..") {
+        resolved.pop();
+      } else {
+        resolved.push(seg);
+      }
+    }
+    return "/" + resolved.join("/");
   }
 
   getCommandHistory(): string[] {
@@ -76,8 +163,7 @@ export class TerminalService {
     // Check for redirection: cmd > filepath
     if (rawInput.includes(" > ")) {
       const [cmdPart, filePart] = rawInput.split(" > ");
-      let targetPath = filePart.trim();
-      if (!targetPath.startsWith("/")) targetPath = "/" + targetPath;
+      const targetPath = this.resolvePath(filePart.trim());
       const subLines = await this.executeCommand(cmdPart.trim(), context);
       const textOutput = subLines.map(l => l.text).join("\n");
       this.virtualFs.set(targetPath, {
@@ -86,6 +172,7 @@ export class TerminalService {
         content: textOutput,
         isDirectory: false,
       });
+      this.saveVirtualFs();
       return [{ id: `line_${Date.now()}`, type: "system", text: `[FS] Wrote output to ${targetPath}`, timestamp: now }];
     }
 
@@ -129,13 +216,16 @@ AUTOMATED STRATEGY WATCHERS:
   kill <pid>                Terminate a background watcher job
 
 SHELL & SCRIPT UTILITIES:
+  pwd                       Print current working directory
+  cd <path>                 Change working directory (e.g. cd clob, cd ..)
   ls [path]                 List files and directories in virtual filesystem
-  mkdir <path>              Create a directory in virtual filesystem (e.g. mkdir clob)
+  mkdir <path>              Create a directory in virtual filesystem (persisted to localStorage)
   touch <path>              Create an empty file
   rm [-rf] <path>           Remove a file or directory
   cat <path>                Read contents of a script or config file
   echo <text> [> <file>]    Print text or redirect to a virtual file
   run <path.sh>             Execute a strategy script
+  resetfs                   Reset virtual filesystem to default factory state
   whoami                    Display active wallet identity
   env                       Display runtime contract addresses and chain configuration
   date                      Current UTC system timestamp
@@ -299,23 +389,60 @@ SHELL & SCRIPT UTILITIES:
       }
     }
 
-    // 10. LS COMMAND
+    // 10a. PWD COMMAND
+    if (cmd === "pwd") {
+      return [{ id: `line_${Date.now()}`, type: "output", text: this.cwd, timestamp: now }];
+    }
+
+    // 10b. CD COMMAND
+    if (cmd === "cd") {
+      const target = args[0] ? args[0].trim() : "/";
+      const resolved = this.resolvePath(target);
+      if (resolved === "/") {
+        this.cwd = "/";
+        return [{ id: `line_${Date.now()}`, type: "output", text: `cwd: /`, timestamp: now }];
+      }
+      const dirEntry = this.virtualFs.get(resolved);
+      if (dirEntry && dirEntry.isDirectory) {
+        this.cwd = resolved;
+        return [{ id: `line_${Date.now()}`, type: "output", text: `cwd: ${resolved}`, timestamp: now }];
+      }
+      // Check if any files exist with this directory prefix
+      const hasChildren = Array.from(this.virtualFs.keys()).some(k => k.startsWith(resolved + "/"));
+      if (hasChildren) {
+        this.cwd = resolved;
+        return [{ id: `line_${Date.now()}`, type: "output", text: `cwd: ${resolved}`, timestamp: now }];
+      }
+      return [{ id: `line_${Date.now()}`, type: "error", text: `cd: no such file or directory: ${target}`, timestamp: now }];
+    }
+
+    // 10c. LS COMMAND
     if (cmd === "ls") {
-      let output = "VIRTUAL FILESYSTEM DIRECTORY:\n";
+      const targetDir = args[0] ? this.resolvePath(args[0].trim()) : this.cwd;
+      let output = `VIRTUAL FILESYSTEM [${targetDir}]:\n`;
+      let count = 0;
       for (const [path, file] of this.virtualFs.entries()) {
-        const typeBadge = file.isDirectory ? "[DIR] " : "[FILE]";
-        output += `  ${typeBadge} ${path.padEnd(26)} - ${file.description}\n`;
+        const isInScope = targetDir === "/" 
+          ? true 
+          : path.startsWith(targetDir.endsWith("/") ? targetDir : targetDir + "/") || path === targetDir;
+        if (isInScope) {
+          const typeBadge = file.isDirectory ? "[DIR] " : "[FILE]";
+          output += `  ${typeBadge} ${path.padEnd(28)} ${file.description}\n`;
+          count++;
+        }
+      }
+      if (count === 0) {
+        output += `  (empty directory)\n`;
       }
       return [{ id: `line_${Date.now()}`, type: "output", text: output, timestamp: now }];
     }
 
-    // 10b. MKDIR COMMAND
+    // 10d. MKDIR COMMAND
     if (cmd === "mkdir") {
       if (!args[0]) {
         return [{ id: `line_${Date.now()}`, type: "error", text: "Usage: mkdir <directory>", timestamp: now }];
       }
-      let targetPath = args[0].trim();
-      if (!targetPath.startsWith("/")) targetPath = "/" + targetPath;
+      const targetPath = this.resolvePath(args[0].trim());
       if (this.virtualFs.has(targetPath)) {
         return [{ id: `line_${Date.now()}`, type: "error", text: `mkdir: cannot create directory '${targetPath}': File exists`, timestamp: now }];
       }
@@ -325,16 +452,16 @@ SHELL & SCRIPT UTILITIES:
         content: "",
         isDirectory: true,
       });
+      this.saveVirtualFs();
       return [{ id: `line_${Date.now()}`, type: "system", text: `[FS] Directory created: ${targetPath}`, timestamp: now }];
     }
 
-    // 10c. TOUCH COMMAND
+    // 10e. TOUCH COMMAND
     if (cmd === "touch") {
       if (!args[0]) {
         return [{ id: `line_${Date.now()}`, type: "error", text: "Usage: touch <filepath>", timestamp: now }];
       }
-      let targetPath = args[0].trim();
-      if (!targetPath.startsWith("/")) targetPath = "/" + targetPath;
+      const targetPath = this.resolvePath(args[0].trim());
       if (!this.virtualFs.has(targetPath)) {
         this.virtualFs.set(targetPath, {
           path: targetPath,
@@ -342,41 +469,65 @@ SHELL & SCRIPT UTILITIES:
           content: "",
           isDirectory: false,
         });
+        this.saveVirtualFs();
       }
       return [{ id: `line_${Date.now()}`, type: "system", text: `[FS] File created: ${targetPath}`, timestamp: now }];
     }
 
-    // 10d. RM COMMAND
+    // 10f. RM COMMAND
     if (cmd === "rm") {
       const rawArg = args.filter((a) => !a.startsWith("-")).pop();
       if (!rawArg) {
         return [{ id: `line_${Date.now()}`, type: "error", text: "Usage: rm [-rf] <path>", timestamp: now }];
       }
-      let targetPath = rawArg.trim();
-      if (!targetPath.startsWith("/")) targetPath = "/" + targetPath;
-      if (!this.virtualFs.has(targetPath)) {
+      const targetPath = this.resolvePath(rawArg.trim());
+      let removed = false;
+      if (this.virtualFs.has(targetPath)) {
+        this.virtualFs.delete(targetPath);
+        removed = true;
+      }
+      // Also delete any nested children if removing a folder
+      for (const k of Array.from(this.virtualFs.keys())) {
+        if (k.startsWith(targetPath + "/")) {
+          this.virtualFs.delete(k);
+          removed = true;
+        }
+      }
+      if (!removed) {
         return [{ id: `line_${Date.now()}`, type: "error", text: `rm: cannot remove '${targetPath}': No such file or directory`, timestamp: now }];
       }
-      this.virtualFs.delete(targetPath);
+      this.saveVirtualFs();
       return [{ id: `line_${Date.now()}`, type: "system", text: `[FS] Removed: ${targetPath}`, timestamp: now }];
     }
 
     // 11. CAT COMMAND
     if (cmd === "cat") {
-      const path = args[0] || "";
+      if (!args[0]) {
+        return [{ id: `line_${Date.now()}`, type: "error", text: "Usage: cat <filepath>", timestamp: now }];
+      }
+      const path = this.resolvePath(args[0]);
       const file = this.virtualFs.get(path);
       if (!file) {
         return [{ id: `line_${Date.now()}`, type: "error", text: `File not found: "${path}". Type "ls" to view available files.`, timestamp: now }];
+      }
+      if (file.isDirectory) {
+        return [{ id: `line_${Date.now()}`, type: "error", text: `cat: ${path}: Is a directory`, timestamp: now }];
       }
       return [{ id: `line_${Date.now()}`, type: "output", text: file.content, timestamp: now }];
     }
 
     // 12. RUN COMMAND (Execute strategy script)
     if (cmd === "run") {
-      const path = args[0] || "";
+      if (!args[0]) {
+        return [{ id: `line_${Date.now()}`, type: "error", text: "Usage: run <script_path>", timestamp: now }];
+      }
+      const path = this.resolvePath(args[0]);
       const file = this.virtualFs.get(path);
       if (!file) {
         return [{ id: `line_${Date.now()}`, type: "error", text: `Script not found: "${path}". Type "ls" to view scripts.`, timestamp: now }];
+      }
+      if (file.isDirectory) {
+        return [{ id: `line_${Date.now()}`, type: "error", text: `run: ${path}: Is a directory`, timestamp: now }];
       }
       const scriptLines = file.content.split("\n").filter((l) => l.trim() && !l.trim().startsWith("#"));
       const executionLines: TerminalLine[] = [
@@ -387,6 +538,13 @@ SHELL & SCRIPT UTILITIES:
         executionLines.push(...subLines);
       }
       return executionLines;
+    }
+
+    // 12b. RESETFS COMMAND
+    if (cmd === "resetfs") {
+      this.seedDefaultFs();
+      this.cwd = "/";
+      return [{ id: `line_${Date.now()}`, type: "system", text: `[FS] Virtual filesystem reset to default factory state.`, timestamp: now }];
     }
 
     // 13. WHOAMI COMMAND

@@ -1,4 +1,5 @@
 export * from "./common/ModeBanner.js";
+export * from "./common/MobileBottomNav.js";
 export * from "./common/Header.js";
 export * from "./common/Footer.js";
 export * from "./landing/LandingScreen.js";
@@ -13,4 +14,5 @@ export * from "./market/CallModal.js";
 export * from "./scorecard/CalibrationDashboard.js";
 export * from "./scorecard/BasicScorecard.js";
 export * from "./history/PositionsTable.js";
+export * from "./strategy/StrategyLibrary.js";
 

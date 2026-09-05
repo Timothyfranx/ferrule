@@ -32,7 +32,7 @@ export function BasicScorecard({ scorecard, mode, onSwitchToPro }: BasicScorecar
         : "UNCALIBRATED";
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 py-8 max-w-5xl mx-auto w-full select-text text-text-primary">
+    <div className="flex-1 overflow-y-auto px-4 py-8 max-w-5xl mx-auto w-full select-text text-text-primary pb-20 sm:pb-8">
       {/* 1. Header Banner & Calibration Assessment */}
       <div className="flex flex-col gap-3 mb-8">
         <div className="flex items-center gap-3 font-mono text-[11px]">

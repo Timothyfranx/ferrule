@@ -58,7 +58,7 @@ export function BasicMarketView({
   const timeFormatted = `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-between px-4 py-6 sm:py-8 max-w-4xl mx-auto w-full overflow-y-auto select-text">
+    <div className="flex-1 flex flex-col items-center justify-between px-4 py-6 sm:py-8 max-w-4xl mx-auto w-full overflow-y-auto select-text pb-20 sm:pb-8">
       {/* 1. Market Window Tabs / Selector */}
       <div className="w-full max-w-xl mb-6">
         <div className="flex items-center gap-1.5 overflow-x-auto pb-2 border-b border-border-flat text-xs font-mono">

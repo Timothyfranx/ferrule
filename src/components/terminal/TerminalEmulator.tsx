@@ -134,7 +134,7 @@ export function TerminalEmulator({
   }
 
   return (
-    <main className="flex-1 overflow-hidden px-4 py-2 bg-bg-base font-mono flex flex-col justify-between select-text">
+    <main className="flex-1 overflow-hidden px-4 py-2 bg-bg-base font-mono flex flex-col justify-between select-text pb-16 sm:pb-2">
       <TerminalBuffer
         lines={lines}
         mode={mode}

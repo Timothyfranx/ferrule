@@ -5,7 +5,7 @@ import type { TradingMode } from "../../types/index.js";
 
 export type AppView = "landing" | "basic" | "terminal";
 export type BasicTab = "markets" | "scorecard" | "positions";
-export type TerminalTab = "terminal" | "markets" | "scorecard" | "positions";
+export type TerminalTab = "terminal" | "markets" | "strategy" | "scorecard" | "positions";
 
 interface HeaderProps {
   currentView: AppView;
@@ -166,6 +166,21 @@ export function Header({
             </button>
 
             <button
+              onClick={() => onChangeTerminalTab("strategy")}
+              className={`px-2.5 py-1 text-[11px] font-mono flex items-center gap-1.5 border-b-2 transition-colors ${
+                terminalTab === "strategy"
+                  ? "border-cyan-eval text-text-primary font-medium"
+                  : "border-transparent text-text-dim hover:text-text-secondary"
+              }`}
+            >
+              <span className="text-cyan-eval">3:</span>
+              <span>Strategy Library</span>
+              <span className="hidden sm:inline ml-1 px-1 py-0.2 bg-bg-base text-text-dim text-[9px] border border-border-base">
+                PERSISTED
+              </span>
+            </button>
+
+            <button
               onClick={() => onChangeTerminalTab("scorecard")}
               className={`px-2.5 py-1 text-[11px] font-mono flex items-center gap-1.5 border-b-2 transition-colors ${
                 terminalTab === "scorecard"
@@ -173,7 +188,7 @@ export function Header({
                   : "border-transparent text-text-dim hover:text-text-secondary"
               }`}
             >
-              <span className="text-text-dim">3:</span>
+              <span className="text-text-dim">4:</span>
               <span>scorecard</span>
             </button>
 
@@ -185,8 +200,13 @@ export function Header({
                   : "border-transparent text-text-dim hover:text-text-secondary"
               }`}
             >
-              <span className="text-text-dim">4:</span>
+              <span className="text-text-dim">5:</span>
               <span>positions</span>
+              {positionsCount > 0 && (
+                <span className="text-[10px] px-1 bg-border-base text-text-secondary">
+                  {positionsCount}
+                </span>
+              )}
             </button>
           </div>
         )}
