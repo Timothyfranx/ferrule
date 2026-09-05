@@ -18,19 +18,18 @@ export function TerminalBuffer({ lines, mode, onExecuteSuggestion }: TerminalBuf
   return (
     <div className="flex-1 overflow-y-auto font-mono text-[13px] leading-[21px] flex flex-col justify-start pr-1 space-y-1">
       {/* System Initialization Banner */}
-      <div className="text-text-dim text-[12px] mb-2 pb-2 border-b border-border-subtle select-none">
-        <div className="text-text-primary font-semibold">Ferrule Deterministic Runtime Shell [v0.9.4-rc2-somnia-shannon]</div>
-        <div>Type <span className="text-text-primary">"help"</span> for commands, <span className="text-text-primary">"markets"</span> for live windows, or <span className="text-text-primary">"run /strategies/fade_crowd.sh"</span> to load rules.</div>
-        <div>Notice: Terminal operates strictly in <span className="text-text-secondary">advisory mode</span>. Live triggers output suggestions; trade execution mandates explicit user confirmation.</div>
+      <div className="text-text-dim text-[11px] mb-2 pb-2 border-b border-border-subtle select-none leading-relaxed">
+        <div className="text-text-primary font-bold">Ferrule Deterministic Shell [Somnia DreamDEX CLOB 50312]</div>
+        <div>Type <span className="text-text-primary">"help"</span> for commands, <span className="text-text-primary">"markets"</span> for live windows, <span className="text-text-primary">"ls"</span> for files.</div>
       </div>
 
       {/* Render Buffer Stream */}
       {lines.map((line) => {
         if (line.type === "prompt") {
           return (
-            <div key={line.id} className="flex items-baseline gap-2 mt-1.5">
-              <span className={isPractice ? "glyph-prompt" : "glyph-prompt-real"}>
-                {line.prefix ?? `⊏ferrule/${mode}`}
+            <div key={line.id} className="flex items-center gap-2 mt-1.5 font-mono">
+              <span className={isPractice ? "text-up-green font-bold shrink-0 text-[13px]" : "text-down-red font-bold shrink-0 text-[13px]"}>
+                {line.prefix ?? "ferrule/~ $"}
               </span>
               <span className="text-text-primary font-medium">{line.text}</span>
             </div>

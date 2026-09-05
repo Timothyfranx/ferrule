@@ -78,7 +78,10 @@ describe("TerminalService — Shell & Script Interpreter", () => {
 
   it("lists virtual files with 'ls' and reads script with 'cat'", async () => {
     const ls = await terminal.executeCommand("ls", context);
-    expect(ls[0].text).toContain("/strategies/fade_crowd.sh");
+    expect(ls[0].text).toContain("strategies/");
+
+    const lsStrat = await terminal.executeCommand("ls /strategies", context);
+    expect(lsStrat[0].text).toContain("fade_crowd.sh");
 
     const cat = await terminal.executeCommand("cat /strategies/fade_crowd.sh", context);
     expect(cat[0].text).toContain("Contrarian Fade Strategy");

@@ -418,23 +418,60 @@ SHELL & SCRIPT UTILITIES:
 
     // 10c. LS COMMAND
     if (cmd === "ls") {
-      const targetDir = args[0] ? this.resolvePath(args[0].trim()) : this.cwd;
-      let output = `VIRTUAL FILESYSTEM [${targetDir}]:\n`;
-      let count = 0;
-      for (const [path, file] of this.virtualFs.entries()) {
-        const isInScope = targetDir === "/" 
-          ? true 
-          : path.startsWith(targetDir.endsWith("/") ? targetDir : targetDir + "/") || path === targetDir;
-        if (isInScope) {
-          const typeBadge = file.isDirectory ? "[DIR] " : "[FILE]";
-          output += `  ${typeBadge} ${path.padEnd(28)} ${file.description}\n`;
-          count++;
+      const isLong = args.includes("-l") || args.includes("-la") || args.includes("-ll");
+      const cleanArgs = args.filter(a => !a.startsWith("-"));
+      const targetDir = cleanArgs[0] ? this.resolvePath(cleanArgs[0].trim()) : this.cwd;
+      const normalizedDir = targetDir === "/" ? "/" : targetDir.replace(/\/$/, "");
+
+      // Find direct children in normalizedDir
+      const directChildren = new Map<string, { name: string; isDirectory: boolean }>();
+
+      for (const [filePath, file] of this.virtualFs.entries()) {
+        if (filePath === "/" || filePath === normalizedDir) continue;
+
+        let relative = "";
+        if (normalizedDir === "/") {
+          if (filePath.startsWith("/")) {
+            relative = filePath.slice(1);
+          }
+        } else if (filePath.startsWith(normalizedDir + "/")) {
+          relative = filePath.slice(normalizedDir.length + 1);
+        }
+
+        if (!relative) continue;
+
+        const segment = relative.split("/")[0];
+        const isDir = file.isDirectory || relative.includes("/");
+
+        if (!directChildren.has(segment)) {
+          directChildren.set(segment, {
+            name: segment + (isDir ? "/" : ""),
+            isDirectory: isDir,
+          });
         }
       }
-      if (count === 0) {
-        output += `  (empty directory)\n`;
+
+      if (directChildren.size === 0) {
+        return [{ id: `line_${Date.now()}`, type: "output", text: "(empty directory)", timestamp: now }];
       }
-      return [{ id: `line_${Date.now()}`, type: "output", text: output, timestamp: now }];
+
+      const items = Array.from(directChildren.values()).sort((a, b) => {
+        if (a.isDirectory && !b.isDirectory) return -1;
+        if (!a.isDirectory && b.isDirectory) return 1;
+        return a.name.localeCompare(b.name);
+      });
+
+      if (isLong) {
+        let output = `total ${items.length}\n`;
+        for (const item of items) {
+          const type = item.isDirectory ? "drwxr-xr-x" : "-rw-r--r--";
+          output += `${type}  1 user  staff  512B  ${item.name}\n`;
+        }
+        return [{ id: `line_${Date.now()}`, type: "output", text: output.trimEnd(), timestamp: now }];
+      } else {
+        const line = items.map(i => i.name).join("   ");
+        return [{ id: `line_${Date.now()}`, type: "output", text: line, timestamp: now }];
+      }
     }
 
     // 10d. MKDIR COMMAND

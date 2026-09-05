@@ -42,17 +42,18 @@ export function TerminalEmulator({
   onOpenTradeModal,
   onLineCountChange,
 }: TerminalEmulatorProps) {
+  const [cwd, setCwd] = useState<string>(terminalService.getCwd());
   const [lines, setLines] = useState<TerminalLine[]>([
     {
       id: "initial_0",
       type: "system",
-      text: "[SYS] Connected to Somnia Shannon CLOB Binary Protocol.",
+      text: "[SYS] Connected to Somnia Shannon CLOB (50312).",
       timestamp: new Date().toTimeString().slice(0, 8),
     },
     {
       id: "initial_1",
       type: "eval",
-      text: "[READY] Background evaluation engine listening. Type 'markets' or 'help' to start.",
+      text: "[READY] Type 'markets' for live order books, or 'help' for commands.",
       timestamp: new Date().toTimeString().slice(0, 8),
     },
   ]);
@@ -62,10 +63,14 @@ export function TerminalEmulator({
   }, [lines, onLineCountChange]);
 
   const handleCommand = useCallback(async (command: string) => {
-    // Echo prompt command
+    const currentCwd = terminalService.getCwd();
+    const displayCwd = currentCwd === "/" ? "~" : currentCwd.replace(/^\//, "");
+
+    // Echo prompt command with clean ferrule/(cwd) $ prefix
     const promptLine: TerminalLine = {
       id: `prompt_${Date.now()}`,
       type: "prompt",
+      prefix: `ferrule/${displayCwd} $`,
       text: command,
       timestamp: new Date().toTimeString().slice(0, 8),
     };
@@ -83,6 +88,9 @@ export function TerminalEmulator({
       walletAddress,
       onTriggerModal: onOpenTradeModal,
     });
+
+    // Update active cwd in emulator state
+    setCwd(terminalService.getCwd());
 
     if (resultLines.some((l) => l.id === "CLEAR_BUFFER")) {
       setLines([]);
@@ -142,6 +150,7 @@ export function TerminalEmulator({
       />
       <TerminalPrompt
         mode={mode}
+        cwd={cwd}
         onSubmit={handleCommand}
         commandHistory={terminalService.getCommandHistory()}
       />
