@@ -13,6 +13,10 @@ import {
   ModeBanner, 
   Header, 
   Footer, 
+  LandingScreen,
+  ModeSelectorModal,
+  BasicMarketView,
+  BasicScorecard,
   TerminalEmulator, 
   MarketGrid, 
   CallModal, 
@@ -29,12 +33,18 @@ import type {
 } from "./types/index.js";
 import { AlertTriangle, X } from "lucide-react";
 
+export type AppView = "landing" | "basic" | "terminal";
+
 export default function App() {
   const { address, isConnected } = useAccount();
   const { data: walletClient } = useWalletClient();
 
   const [mode, setMode] = useState<TradingMode>("practice");
-  const [activeTab, setActiveTab] = useState<"terminal" | "markets" | "scorecard" | "positions">("terminal");
+  const [currentView, setCurrentView] = useState<AppView>("landing");
+  const [basicTab, setBasicTab] = useState<"markets" | "scorecard" | "positions">("markets");
+  const [terminalTab, setTerminalTab] = useState<"terminal" | "markets" | "scorecard" | "positions">("terminal");
+  const [showModeSelector, setShowModeSelector] = useState(false);
+
   const [windows, setWindows] = useState<OpenWindow[]>([]);
   const [calls, setCalls] = useState<Call[]>([]);
   const [loading, setLoading] = useState(true);
@@ -151,31 +161,37 @@ export default function App() {
       const pendingCalls = calls.filter((c) => c.settlementStatus === "pending");
       if (pendingCalls.length === 0) return;
 
-      let hasUpdate = false;
-
-      for (const call of pendingCalls) {
+      let updated = false;
+      for (const c of pendingCalls) {
         try {
-          const info = await marketDataService.getSettledMarketInfo(call.marketId);
+          const info = await marketDataService.getSettledMarketInfo(c.marketId);
           if (info.isResolved || info.isVoided) {
-            if (call.mode === "practice") {
-              practiceService.settleCall(call.id, info);
+            if (c.mode === "practice") {
+              practiceService.settleCall(c.id, info);
             } else {
-              await settlementService.evaluateCallSettlement(call);
+              await settlementService.evaluateCallSettlement(c);
             }
-            hasUpdate = true;
+            updated = true;
           }
         } catch {
-          // Market still pending resolution
+          // Market still resolving
         }
       }
 
-      if (hasUpdate) {
-        setCalls(practiceService.getCalls());
+      if (updated) {
+        setCalls([...practiceService.getCalls()]);
       }
     }, 4000);
 
     return () => clearInterval(interval);
   }, [calls, marketDataService, practiceService, settlementService]);
+
+  // Feed live windows to background strategy watcher service
+  useEffect(() => {
+    if (windows.length > 0) {
+      watcherService.evaluateTick(windows, mode);
+    }
+  }, [windows, watcherService, mode]);
 
   // Mode switch handler with risk warning
   function handleToggleMode() {
@@ -200,7 +216,7 @@ export default function App() {
     const { window: w, direction } = tradeModal;
 
     if (mode === "practice") {
-      const newCall = practiceService.placeCall(w, direction, stake);
+      practiceService.placeCall(w, direction, stake);
       setCalls(practiceService.getCalls());
     } else {
       if (!realService) {
@@ -220,17 +236,23 @@ export default function App() {
 
   const scorecard: CalibrationScorecard = ScorecardService.computeScorecard(calls, mode);
   const activeRound = windows.length > 0 ? windows[0].marketId.slice(0, 8) : undefined;
+  const positionsCount = calls.filter((c) => c.mode === mode).length;
 
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-bg-base text-text-primary select-none">
-      {/* 1. Header (VS Code / iTerm Style Tabs + Telemetry) */}
+      {/* 1. Header (Experience Switcher + Subtabs + Telemetry) */}
       <Header
-        activeTab={activeTab}
-        onSelectTab={setActiveTab}
+        currentView={currentView}
+        onChangeView={setCurrentView}
+        basicTab={basicTab}
+        onChangeBasicTab={setBasicTab}
+        terminalTab={terminalTab}
+        onChangeTerminalTab={setTerminalTab}
         mode={mode}
         bufferLineCount={bufferLineCount}
         activeWatchersCount={watcherService.getWatchers().length}
         openWindowsCount={windows.length}
+        positionsCount={positionsCount}
       />
 
       {/* 2. Sticky Mode Banner (Unmissable Solid Fill) */}
@@ -240,47 +262,108 @@ export default function App() {
         bankroll={practiceService.getBankroll()}
         realBalance={realUsdcBalance}
         activeRound={activeRound}
+        currentView={currentView}
+        onSwitchView={setCurrentView}
       />
 
       {/* 3. Main Multi-Pane Content */}
       <div className="flex-1 flex flex-col overflow-hidden relative">
-        {activeTab === "terminal" && (
-          <TerminalEmulator
+        {/* VIEW A: LANDING SCREEN */}
+        {currentView === "landing" && (
+          <LandingScreen
+            windows={windows}
+            onEnterBasic={() => setCurrentView("basic")}
+            onEnterPro={() => setCurrentView("terminal")}
+            onOpenModeSelector={() => setShowModeSelector(true)}
             mode={mode}
-            setMode={setMode}
-            windows={windows}
-            calls={calls}
-            onCallsChange={setCalls}
-            practiceService={practiceService}
-            realService={realService}
-            watcherService={watcherService}
-            walletAddress={address}
-            onOpenTradeModal={handleOpenTradeModal}
-            onLineCountChange={setBufferLineCount}
-          />
-        )}
-
-        {activeTab === "markets" && (
-          <MarketGrid
-            windows={windows}
-            onSelectCall={handleOpenTradeModal}
-            loading={loading}
-          />
-        )}
-
-        {activeTab === "scorecard" && (
-          <CalibrationDashboard
+            onToggleMode={handleToggleMode}
+            bankroll={practiceService.getBankroll()}
             scorecard={scorecard}
-            mode={mode}
           />
         )}
 
-        {activeTab === "positions" && (
-          <PositionsTable
-            calls={calls}
-            mode={mode}
-            onClaimWinnings={handleClaimWinnings}
-          />
+        {/* VIEW B: BASIC TRADING SURFACE */}
+        {currentView === "basic" && (
+          <div className="flex-1 flex flex-col overflow-hidden">
+            {basicTab === "markets" && (
+              <BasicMarketView
+                windows={windows}
+                onSelectCall={handleOpenTradeModal}
+                onSwitchToPro={() => setCurrentView("terminal")}
+                recentCalls={calls.filter((c) => c.mode === mode)}
+                loading={loading}
+                mode={mode}
+              />
+            )}
+
+            {basicTab === "scorecard" && (
+              <BasicScorecard
+                scorecard={scorecard}
+                mode={mode}
+                onSwitchToPro={() => setCurrentView("terminal")}
+              />
+            )}
+
+            {basicTab === "positions" && (
+              <div className="flex-1 overflow-y-auto">
+                <PositionsTable
+                  calls={calls}
+                  mode={mode}
+                  onClaimWinnings={handleClaimWinnings}
+                />
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* VIEW C: PRO TERMINAL SHELL */}
+        {currentView === "terminal" && (
+          <div className="flex-1 flex flex-col overflow-hidden">
+            {terminalTab === "terminal" && (
+              <TerminalEmulator
+                mode={mode}
+                setMode={setMode}
+                windows={windows}
+                calls={calls}
+                onCallsChange={setCalls}
+                practiceService={practiceService}
+                realService={realService}
+                watcherService={watcherService}
+                walletAddress={address}
+                onOpenTradeModal={handleOpenTradeModal}
+                onLineCountChange={setBufferLineCount}
+              />
+            )}
+
+            {terminalTab === "markets" && (
+              <div className="flex-1 overflow-y-auto">
+                <MarketGrid
+                  windows={windows}
+                  onSelectCall={handleOpenTradeModal}
+                  loading={loading}
+                />
+              </div>
+            )}
+
+            {terminalTab === "scorecard" && (
+              <div className="flex-1 overflow-y-auto">
+                <CalibrationDashboard
+                  scorecard={scorecard}
+                  mode={mode}
+                />
+              </div>
+            )}
+
+            {terminalTab === "positions" && (
+              <div className="flex-1 overflow-y-auto">
+                <PositionsTable
+                  calls={calls}
+                  mode={mode}
+                  onClaimWinnings={handleClaimWinnings}
+                />
+              </div>
+            )}
+          </div>
         )}
       </div>
 
@@ -299,6 +382,17 @@ export default function App() {
           onConfirm={handleConfirmTrade}
         />
       )}
+
+      {/* Mode Selector Modal */}
+      <ModeSelectorModal
+        isOpen={showModeSelector}
+        onClose={() => setShowModeSelector(false)}
+        onSelectMode={(selected) => {
+          setCurrentView(selected);
+          setShowModeSelector(false);
+        }}
+        currentMode={currentView === "terminal" ? "terminal" : "basic"}
+      />
 
       {/* Risk Transition Warning Modal */}
       {showTransitionModal && (

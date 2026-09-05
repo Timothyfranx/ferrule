@@ -3,3 +3,4 @@ dist
 .env
 *.log
 design_ref
+design_ref_v2

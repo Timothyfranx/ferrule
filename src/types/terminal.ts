@@ -47,4 +47,6 @@ export interface VirtualFile {
   path: string;
   description: string;
   content: string;
+  isDirectory?: boolean;
 }
+

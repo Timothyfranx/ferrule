@@ -91,4 +91,30 @@ describe("TerminalService — Shell & Script Interpreter", () => {
     expect(run[1].text).toContain("[INIT] Watcher spawned");
     expect(watcherService.getWatchers().length).toBeGreaterThan(0);
   });
+
+  it("supports virtual filesystem operations: mkdir, touch, redirection, and rm", async () => {
+    // 1. mkdir clob
+    const mkdirRes = await terminal.executeCommand("mkdir clob", context);
+    expect(mkdirRes[0].text).toContain("[FS] Directory created: /clob");
+
+    // 2. mkdir duplicate fails
+    const mkdirDup = await terminal.executeCommand("mkdir clob", context);
+    expect(mkdirDup[0].type).toBe("error");
+
+    // 3. touch /clob/custom.sh
+    const touchRes = await terminal.executeCommand("touch /clob/custom.sh", context);
+    expect(touchRes[0].text).toContain("[FS] File created: /clob/custom.sh");
+
+    // 4. echo redirection >
+    const redirRes = await terminal.executeCommand("echo watch BTC-300s if lean>=0.70 then suggest stake 50 up > /clob/custom.sh", context);
+    expect(redirRes[0].text).toContain("[FS] Wrote output to /clob/custom.sh");
+
+    const catRes = await terminal.executeCommand("cat /clob/custom.sh", context);
+    expect(catRes[0].text).toContain("watch BTC-300s");
+
+    // 5. rm /clob/custom.sh
+    const rmRes = await terminal.executeCommand("rm /clob/custom.sh", context);
+    expect(rmRes[0].text).toContain("[FS] Removed: /clob/custom.sh");
+  });
 });
+

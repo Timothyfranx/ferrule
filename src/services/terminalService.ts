@@ -73,6 +73,22 @@ export class TerminalService {
     const now = new Date().toTimeString().slice(0, 8);
     const lines: TerminalLine[] = [];
 
+    // Check for redirection: cmd > filepath
+    if (rawInput.includes(" > ")) {
+      const [cmdPart, filePart] = rawInput.split(" > ");
+      let targetPath = filePart.trim();
+      if (!targetPath.startsWith("/")) targetPath = "/" + targetPath;
+      const subLines = await this.executeCommand(cmdPart.trim(), context);
+      const textOutput = subLines.map(l => l.text).join("\n");
+      this.virtualFs.set(targetPath, {
+        path: targetPath,
+        description: "User file",
+        content: textOutput,
+        isDirectory: false,
+      });
+      return [{ id: `line_${Date.now()}`, type: "system", text: `[FS] Wrote output to ${targetPath}`, timestamp: now }];
+    }
+
     const parts = input.split(/\s+/);
     const cmd = parts[0].toLowerCase();
     const args = parts.slice(1);
@@ -113,8 +129,12 @@ AUTOMATED STRATEGY WATCHERS:
   kill <pid>                Terminate a background watcher job
 
 SHELL & SCRIPT UTILITIES:
-  ls                        List strategy scripts in virtual filesystem
+  ls [path]                 List files and directories in virtual filesystem
+  mkdir <path>              Create a directory in virtual filesystem (e.g. mkdir clob)
+  touch <path>              Create an empty file
+  rm [-rf] <path>           Remove a file or directory
   cat <path>                Read contents of a script or config file
+  echo <text> [> <file>]    Print text or redirect to a virtual file
   run <path.sh>             Execute a strategy script
   whoami                    Display active wallet identity
   env                       Display runtime contract addresses and chain configuration
@@ -283,9 +303,62 @@ SHELL & SCRIPT UTILITIES:
     if (cmd === "ls") {
       let output = "VIRTUAL FILESYSTEM DIRECTORY:\n";
       for (const [path, file] of this.virtualFs.entries()) {
-        output += `  ${path.padEnd(28)} - ${file.description}\n`;
+        const typeBadge = file.isDirectory ? "[DIR] " : "[FILE]";
+        output += `  ${typeBadge} ${path.padEnd(26)} - ${file.description}\n`;
       }
       return [{ id: `line_${Date.now()}`, type: "output", text: output, timestamp: now }];
+    }
+
+    // 10b. MKDIR COMMAND
+    if (cmd === "mkdir") {
+      if (!args[0]) {
+        return [{ id: `line_${Date.now()}`, type: "error", text: "Usage: mkdir <directory>", timestamp: now }];
+      }
+      let targetPath = args[0].trim();
+      if (!targetPath.startsWith("/")) targetPath = "/" + targetPath;
+      if (this.virtualFs.has(targetPath)) {
+        return [{ id: `line_${Date.now()}`, type: "error", text: `mkdir: cannot create directory '${targetPath}': File exists`, timestamp: now }];
+      }
+      this.virtualFs.set(targetPath, {
+        path: targetPath,
+        description: "Directory",
+        content: "",
+        isDirectory: true,
+      });
+      return [{ id: `line_${Date.now()}`, type: "system", text: `[FS] Directory created: ${targetPath}`, timestamp: now }];
+    }
+
+    // 10c. TOUCH COMMAND
+    if (cmd === "touch") {
+      if (!args[0]) {
+        return [{ id: `line_${Date.now()}`, type: "error", text: "Usage: touch <filepath>", timestamp: now }];
+      }
+      let targetPath = args[0].trim();
+      if (!targetPath.startsWith("/")) targetPath = "/" + targetPath;
+      if (!this.virtualFs.has(targetPath)) {
+        this.virtualFs.set(targetPath, {
+          path: targetPath,
+          description: "User file",
+          content: "",
+          isDirectory: false,
+        });
+      }
+      return [{ id: `line_${Date.now()}`, type: "system", text: `[FS] File created: ${targetPath}`, timestamp: now }];
+    }
+
+    // 10d. RM COMMAND
+    if (cmd === "rm") {
+      const rawArg = args.filter((a) => !a.startsWith("-")).pop();
+      if (!rawArg) {
+        return [{ id: `line_${Date.now()}`, type: "error", text: "Usage: rm [-rf] <path>", timestamp: now }];
+      }
+      let targetPath = rawArg.trim();
+      if (!targetPath.startsWith("/")) targetPath = "/" + targetPath;
+      if (!this.virtualFs.has(targetPath)) {
+        return [{ id: `line_${Date.now()}`, type: "error", text: `rm: cannot remove '${targetPath}': No such file or directory`, timestamp: now }];
+      }
+      this.virtualFs.delete(targetPath);
+      return [{ id: `line_${Date.now()}`, type: "system", text: `[FS] Removed: ${targetPath}`, timestamp: now }];
     }
 
     // 11. CAT COMMAND

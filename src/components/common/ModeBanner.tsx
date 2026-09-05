@@ -7,6 +7,8 @@ interface ModeBannerProps {
   bankroll: number;
   realBalance?: string;
   activeRound?: string;
+  currentView?: "landing" | "basic" | "terminal";
+  onSwitchView?: (view: "landing" | "basic" | "terminal") => void;
 }
 
 export function ModeBanner({
@@ -15,6 +17,8 @@ export function ModeBanner({
   bankroll,
   realBalance = "0.00",
   activeRound,
+  currentView,
+  onSwitchView,
 }: ModeBannerProps) {
   const isPractice = mode === "practice";
 
@@ -40,8 +44,38 @@ export function ModeBanner({
         )}
       </div>
 
-      <div className="flex items-center gap-4 text-[11px]">
-        <span className="font-normal hidden sm:inline">
+      <div className="flex items-center gap-3 text-[11px]">
+        {/* Quick View Switcher button right on banner */}
+        {currentView && onSwitchView && (
+          <div className="hidden sm:flex items-center gap-2 mr-2 border-r border-[#0a0a0f]/20 pr-3">
+            {currentView === "basic" && (
+              <button
+                onClick={() => onSwitchView("terminal")}
+                className="bg-[#0a0a0f]/15 hover:bg-[#0a0a0f]/25 px-2 py-0.5 text-[10px] font-bold text-[#0a0a0f] uppercase transition-colors"
+              >
+                Switch to Pro Terminal →
+              </button>
+            )}
+            {currentView === "terminal" && (
+              <button
+                onClick={() => onSwitchView("basic")}
+                className="bg-[#0a0a0f]/15 hover:bg-[#0a0a0f]/25 px-2 py-0.5 text-[10px] font-bold text-[#0a0a0f] uppercase transition-colors"
+              >
+                Switch to Basic View →
+              </button>
+            )}
+            {currentView === "landing" && (
+              <button
+                onClick={() => onSwitchView("basic")}
+                className="bg-[#0a0a0f]/15 hover:bg-[#0a0a0f]/25 px-2 py-0.5 text-[10px] font-bold text-[#0a0a0f] uppercase transition-colors"
+              >
+                Enter Basic Mode →
+              </button>
+            )}
+          </div>
+        )}
+
+        <span className="font-normal hidden md:inline">
           {isPractice ? (
             <>
               VIRTUAL BAL: <span className="font-bold">${bankroll.toFixed(2)} USDso</span>
