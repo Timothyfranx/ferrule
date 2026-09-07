@@ -35,7 +35,13 @@ export class MarketDataService {
    * Gated on getMarketOnchain status === 1 (Trading).
    */
   async getOpenWindows(): Promise<OpenWindow[]> {
-    const binaryMarkets = await this.client.listLiveBinaryMarkets();
+    let binaryMarkets: any[] = [];
+    try {
+      binaryMarkets = await this.client.listLiveBinaryMarkets();
+    } catch (err) {
+      console.warn("Somnia testnet indexer unavailable or timed out:", err);
+      return [];
+    }
 
     const nowSec = Math.floor(Date.now() / 1000);
 

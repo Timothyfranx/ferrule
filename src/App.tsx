@@ -236,6 +236,16 @@ export default function App() {
     }
   }
 
+  const handleEnterBasic = useCallback(() => {
+    setCurrentView("basic");
+    setBasicTab("markets");
+  }, []);
+
+  const handleEnterPro = useCallback(() => {
+    setCurrentView("terminal");
+    setTerminalTab("terminal");
+  }, []);
+
   const scorecard: CalibrationScorecard = ScorecardService.computeScorecard(calls, mode);
   const activeRound = windows.length > 0 ? windows[0].marketId.slice(0, 8) : undefined;
   const positionsCount = calls.filter((c) => c.mode === mode).length;
@@ -277,8 +287,8 @@ export default function App() {
         {currentView === "landing" && (
           <LandingScreen
             windows={windows}
-            onEnterBasic={() => setCurrentView("basic")}
-            onEnterPro={() => setCurrentView("terminal")}
+            onEnterBasic={handleEnterBasic}
+            onEnterPro={handleEnterPro}
             onOpenModeSelector={() => setShowModeSelector(true)}
             mode={mode}
             onToggleMode={handleToggleMode}
@@ -294,7 +304,7 @@ export default function App() {
               <BasicMarketView
                 windows={windows}
                 onSelectCall={handleOpenTradeModal}
-                onSwitchToPro={() => setCurrentView("terminal")}
+                onSwitchToPro={handleEnterPro}
                 recentCalls={calls.filter((c) => c.mode === mode)}
                 loading={loading}
                 mode={mode}
@@ -305,7 +315,7 @@ export default function App() {
               <BasicScorecard
                 scorecard={scorecard}
                 mode={mode}
-                onSwitchToPro={() => setCurrentView("terminal")}
+                onSwitchToPro={handleEnterPro}
               />
             )}
 
@@ -419,7 +429,11 @@ export default function App() {
         isOpen={showModeSelector}
         onClose={() => setShowModeSelector(false)}
         onSelectMode={(selected) => {
-          setCurrentView(selected);
+          if (selected === "basic") {
+            handleEnterBasic();
+          } else {
+            handleEnterPro();
+          }
           setShowModeSelector(false);
         }}
         currentMode={currentView === "terminal" ? "terminal" : "basic"}

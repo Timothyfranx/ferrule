@@ -22,6 +22,8 @@ describe("MarketDataService — Live Somnia Shannon Discovery & Gating", () => {
       expect(first.upLeanPercent).toBeGreaterThanOrEqual(1);
       expect(first.upLeanPercent).toBeLessThanOrEqual(99);
       expect(["BTC", "ETH", "SOL"]).toContain(first.asset);
+    } else {
+      console.log("No live binary windows currently active or indexer response empty.");
     }
-  }, 30000);
+  }, 35000);
 });

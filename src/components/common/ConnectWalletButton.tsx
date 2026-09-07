@@ -77,7 +77,7 @@ export function ConnectWalletButton() {
           return (
             <div
               aria-hidden="true"
-              className="opacity-0 pointer-events-none select-none h-8 w-28 bg-bg-base border border-border-base"
+              className="opacity-0 pointer-events-none select-none h-7 w-24 bg-bg-base border border-border-base rounded-[3px]"
             />
           );
         }
@@ -88,9 +88,9 @@ export function ConnectWalletButton() {
             <button
               onClick={openConnectModal}
               type="button"
-              className="h-8 px-3 bg-up-green text-[#0a0a0f] hover:bg-up-green/90 font-mono text-[11px] font-bold tracking-wider uppercase transition-colors flex items-center gap-1.5 cursor-pointer rounded-none border border-up-green"
+              className="h-7 px-2.5 sm:px-3 bg-bg-base border border-border-interactive hover:border-cyan-eval/60 text-text-primary hover:text-white font-mono text-[11px] font-medium tracking-wide uppercase transition-all flex items-center gap-1.5 cursor-pointer rounded-[3px] group shadow-xs"
             >
-              <Wallet size={13} />
+              <Wallet size={12} className="text-text-dim group-hover:text-cyan-eval transition-colors" />
               <span>Connect Wallet</span>
             </button>
           );
@@ -99,25 +99,25 @@ export function ConnectWalletButton() {
         // 2. CONNECTED BUT UNSUPPORTED NETWORK (e.g. user is on Ethereum Mainnet / Sepolia)
         if (chain.unsupported || chain.id !== SOMNIA_CHAIN_ID) {
           return (
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1">
               <button
                 onClick={handleDirectSwitch}
                 disabled={isSwitching}
                 type="button"
-                className="h-8 px-2.5 bg-down-red/20 text-down-red border border-down-red hover:bg-down-red hover:text-white font-mono text-[11px] font-bold transition-colors flex items-center gap-1.5 cursor-pointer animate-pulse"
+                className="h-7 px-2 bg-down-red/15 text-down-red border border-down-red hover:bg-down-red/25 font-mono text-[10px] font-bold tracking-wider uppercase transition-colors flex items-center gap-1.5 cursor-pointer rounded-[3px]"
                 title="Your wallet is on the wrong network. Click to switch to Somnia Shannon (50312)."
               >
-                <AlertTriangle size={13} />
-                <span>{isSwitching ? "Switching..." : "Switch to Somnia"}</span>
+                <AlertTriangle size={11} />
+                <span>{isSwitching ? "Switching..." : "Switch Network"}</span>
               </button>
 
               <button
                 onClick={openChainModal}
                 type="button"
-                className="h-8 px-2 bg-bg-raised border border-border-base text-text-dim hover:text-text-primary font-mono text-[10px]"
+                className="h-7 px-1.5 bg-bg-base border border-border-base text-text-dim hover:text-text-primary font-mono text-[10px] rounded-[3px] cursor-pointer"
                 title="Select network manually"
               >
-                <ChevronDown size={12} />
+                <ChevronDown size={11} />
               </button>
             </div>
           );
@@ -130,24 +130,23 @@ export function ConnectWalletButton() {
             <button
               onClick={openChainModal}
               type="button"
-              className="h-8 px-2 bg-bg-base border border-border-base hover:border-border-interactive text-text-secondary hover:text-text-primary text-[11px] flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="h-7 px-2 bg-bg-base border border-border-base hover:border-border-interactive text-text-secondary hover:text-text-primary text-[10px] flex items-center gap-1.5 transition-colors cursor-pointer rounded-[3px]"
               title="Connected to Somnia Shannon Testnet"
             >
               <span className="w-1.5 h-1.5 bg-up-green rounded-full inline-block"></span>
-              <span className="hidden sm:inline text-cyan-eval">Somnia</span>
-              <span className="text-text-dim text-[10px]">(50312)</span>
+              <span className="text-text-secondary">Shannon</span>
             </button>
 
             {/* Account Pill */}
             <button
               onClick={openAccountModal}
               type="button"
-              className="h-8 px-2.5 bg-bg-raised border border-border-interactive hover:border-up-green text-text-primary text-[11px] font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="h-7 px-2 bg-bg-base border border-border-interactive hover:border-text-secondary text-text-primary text-[11px] font-semibold flex items-center gap-1.5 transition-colors cursor-pointer rounded-[3px]"
               title="Open Account Modal"
             >
-              <span className="w-2 h-2 bg-up-green inline-block"></span>
+              <span className="w-1.5 h-1.5 bg-up-green inline-block"></span>
               <span>{account.displayName}</span>
-              <ChevronDown size={11} className="text-text-dim" />
+              <ChevronDown size={10} className="text-text-dim" />
             </button>
           </div>
         );

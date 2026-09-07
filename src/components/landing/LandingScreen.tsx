@@ -49,45 +49,45 @@ export function LandingScreen({
         <div className="w-full max-w-4xl mx-auto flex flex-col items-center text-center">
           
           {/* Pill Badge */}
-          <div className="inline-flex items-center gap-2 px-3 py-1 border border-border-flat bg-bg-raised text-text-dim font-mono text-[11px] uppercase tracking-widest rounded-sm mb-6">
-            <span className="w-1.5 h-1.5 bg-up-green inline-block"></span>
-            <span className="text-text-secondary">DETERMINISTIC PREDICTION PROTOCOL</span>
-            <span className="text-border-interactive">|</span>
-            <span className="text-cyan-eval">SOMNIA DREAMDEX CLOB</span>
+          <div className="inline-flex items-center gap-2 px-3 py-1 border border-border-interactive bg-bg-raised text-text-dim font-mono text-[11px] uppercase tracking-widest rounded-[3px] mb-6 shadow-xs">
+            <span className="w-1.5 h-1.5 bg-cyan-eval inline-block animate-pulse"></span>
+            <span className="text-text-secondary">SOMNIA DREAMDEX CLOB</span>
+            <span className="text-border-interactive">/</span>
+            <span className="text-cyan-eval font-semibold">PRO QUANT TERMINAL</span>
           </div>
 
           {/* Hero Headline */}
           <h1 className="font-sans text-3xl sm:text-5xl md:text-6xl font-semibold tracking-tight text-text-primary max-w-3xl mb-4 leading-[1.12]">
-            Trade real market signals, risk-free, until you&apos;re ready.
+            Algorithmic prediction terminal for Somnia DreamDEX CLOB.
           </h1>
 
           {/* Explanatory Subtitle */}
           <p className="font-sans text-base sm:text-lg text-text-secondary max-w-2xl mb-8 leading-relaxed">
-            Practice against Somnia DreamDEX live Central Limit Order Book with zero capital risk. When your strategy proves empirical calibration, transition seamlessly to direct on-chain execution.
+            Trade live order-book event contracts via interactive CLI, algorithmic bash scripts, background watchers, and real-time Pyth oracles — with zero capital risk in simulation before going live on-chain.
           </p>
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto justify-center mb-6">
             <button
-              onClick={onEnterBasic}
-              className="w-full sm:w-auto h-11 px-6 bg-up-green text-[#0a0a0f] hover:bg-up-green/90 font-mono text-xs uppercase tracking-wider font-bold rounded-sm transition-colors flex items-center justify-center gap-2"
+              onClick={onEnterPro}
+              className="w-full sm:w-auto h-11 px-6 bg-cyan-eval text-[#0a0a0f] hover:bg-cyan-eval/90 font-mono text-xs uppercase tracking-wider font-bold rounded-[3px] transition-all flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(0,229,255,0.25)] cursor-pointer group"
             >
-              <Layers size={16} />
-              <span>Launch Basic View</span>
-              <ArrowRight size={15} />
+              <Terminal size={16} />
+              <span>Enter Pro Terminal</span>
+              <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
             </button>
 
             <button
-              onClick={onEnterPro}
-              className="w-full sm:w-auto h-11 px-6 bg-bg-raised border border-border-interactive hover:border-cyan-eval text-text-primary font-mono text-xs uppercase tracking-wider font-semibold rounded-sm transition-colors flex items-center justify-center gap-2"
+              onClick={onEnterBasic}
+              className="w-full sm:w-auto h-11 px-5 bg-bg-raised border border-border-interactive hover:border-text-secondary text-text-primary font-mono text-xs uppercase tracking-wider font-semibold rounded-[3px] transition-colors flex items-center justify-center gap-2 cursor-pointer"
             >
-              <Terminal size={16} className="text-cyan-eval" />
-              <span>Enter Pro Terminal</span>
+              <Layers size={16} className="text-up-green" />
+              <span>Launch Basic View</span>
             </button>
 
             <button
               onClick={onOpenModeSelector}
-              className="w-full sm:w-auto h-11 px-4 bg-bg-raised border border-border-flat hover:border-border-interactive text-text-secondary font-mono text-xs uppercase tracking-wider rounded-sm transition-colors flex items-center justify-center gap-1.5"
+              className="w-full sm:w-auto h-11 px-4 bg-bg-raised border border-border-flat hover:border-border-interactive text-text-secondary hover:text-text-primary font-mono text-xs uppercase tracking-wider rounded-[3px] transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <span>Interface Selector</span>
             </button>
@@ -363,12 +363,12 @@ export function LandingScreen({
           <span>Ferrule © 2026 · Somnia DreamDEX Event Contracts</span>
         </div>
         <div className="flex items-center gap-4">
-          <button onClick={onEnterBasic} className="text-up-green hover:underline">
-            Launch Basic View
+          <button onClick={onEnterPro} className="text-cyan-eval hover:underline font-semibold">
+            Launch Pro Terminal
           </button>
           <span>/</span>
-          <button onClick={onEnterPro} className="text-cyan-eval hover:underline">
-            Launch Pro Terminal
+          <button onClick={onEnterBasic} className="text-text-secondary hover:text-text-primary">
+            Launch Basic View
           </button>
           <span>/</span>
           <a 
