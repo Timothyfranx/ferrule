@@ -1,13 +1,13 @@
 import React from "react";
 import { ConnectWalletButton } from "./ConnectWalletButton.js";
-import { Layers, Terminal, Home, BarChart3, Clock, ShieldCheck, Zap } from "lucide-react";
+import { Layers, Terminal, Home, BarChart3, Clock, Sliders } from "lucide-react";
 import type { TradingMode } from "../../types/index.js";
 
 export type AppView = "landing" | "basic" | "terminal";
 export type BasicTab = "markets" | "scorecard" | "positions";
 export type TerminalTab = "terminal" | "markets" | "strategy" | "scorecard" | "positions";
 
-interface HeaderProps {
+export interface HeaderProps {
   currentView: AppView;
   onChangeView: (view: AppView) => void;
   basicTab: BasicTab;
@@ -15,8 +15,11 @@ interface HeaderProps {
   terminalTab: TerminalTab;
   onChangeTerminalTab: (tab: TerminalTab) => void;
   mode: TradingMode;
-  bufferLineCount: number;
-  activeWatchersCount: number;
+  onToggleMode?: () => void;
+  bankroll?: number;
+  realBalance?: string;
+  bufferLineCount?: number;
+  activeWatchersCount?: number;
   openWindowsCount: number;
   positionsCount: number;
 }
@@ -29,208 +32,192 @@ export function Header({
   terminalTab,
   onChangeTerminalTab,
   mode,
-  bufferLineCount,
-  activeWatchersCount,
+  onToggleMode,
+  bankroll = 1000,
+  realBalance = "0.00",
   openWindowsCount,
   positionsCount,
 }: HeaderProps) {
   const isPractice = mode === "practice";
 
+  const isMarketsActive = currentView === "basic" && basicTab === "markets";
+  const isTerminalActive = currentView === "terminal" && terminalTab === "terminal";
+  const isStrategiesActive = currentView === "terminal" && terminalTab === "strategy";
+  const isScorecardActive =
+    (currentView === "basic" && basicTab === "scorecard") ||
+    (currentView === "terminal" && terminalTab === "scorecard");
+  const isPositionsActive =
+    (currentView === "basic" && basicTab === "positions") ||
+    (currentView === "terminal" && terminalTab === "positions");
+  const isOverviewActive = currentView === "landing";
+
   return (
-    <header className="w-full bg-bg-raised border-b border-border-base flex items-center justify-between select-none shrink-0 h-11 px-3">
-      {/* Left: Brand & Primary Experience Switcher */}
-      <div className="flex items-center h-full gap-2 overflow-x-auto text-[12px]">
+    <header className="w-full bg-bg-raised border-b border-border-base flex items-center justify-between select-none shrink-0 h-12 px-4 z-30">
+      {/* Left: Clean Brand & Primary Navigation Tabs */}
+      <div className="flex items-center h-full gap-4 sm:gap-6 overflow-x-auto no-scrollbar">
         {/* Brand Mark */}
-        <button 
+        <button
           onClick={() => onChangeView("landing")}
-          className="flex items-center px-2 py-1 mr-1 text-text-primary hover:text-white border-r border-border-base gap-2 cursor-pointer"
-          title="Return to Landing Page"
+          className="flex items-center gap-2 text-text-primary hover:text-white transition-colors cursor-pointer group shrink-0"
+          title="Ferrule — Somnia DreamDEX Terminal"
         >
-          <span className="w-2.5 h-2.5 bg-up-green block"></span>
-          <span className="font-mono text-[12px] font-bold tracking-wider">
+          <div className="w-2.5 h-2.5 bg-up-green group-hover:scale-110 transition-transform"></div>
+          <span className="font-mono text-[13px] font-bold tracking-wider">
             FERRULE
           </span>
-          <span className="text-[10px] font-mono text-text-dim hidden sm:inline">DREAMDEX</span>
+          <span className="hidden sm:inline-block text-[9px] font-mono text-cyan-eval bg-cyan-eval/10 border border-cyan-eval/25 px-1.5 py-0.5 tracking-wider uppercase">
+            CLOB
+          </span>
         </button>
 
-        {/* View Switcher Capsule (Landing | Basic | Pro Terminal) */}
-        <div className="flex items-center bg-bg-base border border-border-base p-0.5 mr-2">
+        {/* Primary Nav Links */}
+        <nav className="flex items-center h-full gap-1 sm:gap-2 text-[12px] font-mono">
+          {/* 1. Markets */}
           <button
-            onClick={() => onChangeView("landing")}
-            className={`px-2.5 py-1 text-[11px] font-mono flex items-center gap-1.5 transition-colors ${
-              currentView === "landing"
-                ? "bg-bg-raised text-text-primary font-semibold"
-                : "text-text-dim hover:text-text-secondary"
+            onClick={() => {
+              onChangeView("basic");
+              onChangeBasicTab("markets");
+            }}
+            className={`h-full px-2.5 sm:px-3 flex items-center gap-1.5 border-b-2 transition-colors cursor-pointer shrink-0 ${
+              isMarketsActive
+                ? "border-up-green text-text-primary font-bold"
+                : "border-transparent text-text-dim hover:text-text-secondary"
             }`}
           >
-            <Home size={12} />
-            <span className="hidden md:inline">Overview</span>
-          </button>
-
-          <button
-            onClick={() => onChangeView("basic")}
-            className={`px-2.5 py-1 text-[11px] font-mono flex items-center gap-1.5 transition-colors ${
-              currentView === "basic"
-                ? "bg-up-green text-[#0a0a0f] font-bold"
-                : "text-text-dim hover:text-text-secondary"
-            }`}
-          >
-            <Layers size={12} />
-            <span>Basic</span>
-          </button>
-
-          <button
-            onClick={() => onChangeView("terminal")}
-            className={`px-2.5 py-1 text-[11px] font-mono flex items-center gap-1.5 transition-colors ${
-              currentView === "terminal"
-                ? "bg-cyan-eval text-[#0a0a0f] font-bold"
-                : "text-text-dim hover:text-text-secondary"
-            }`}
-          >
-            <Terminal size={12} />
-            <span>Pro Terminal</span>
-          </button>
-        </div>
-
-        {/* Secondary Contextual Tabs based on active view */}
-        {currentView === "basic" && (
-          <div className="flex items-center h-full gap-1 border-l border-border-base pl-2">
-            <button
-              onClick={() => onChangeBasicTab("markets")}
-              className={`px-3 py-1 text-[11px] font-mono flex items-center gap-1.5 border-b-2 transition-colors ${
-                basicTab === "markets"
-                  ? "border-up-green text-text-primary font-medium"
-                  : "border-transparent text-text-dim hover:text-text-secondary"
-              }`}
-            >
-              <span>Live Markets</span>
-              <span className="text-[10px] px-1 bg-border-base text-text-secondary">
+            <Layers size={13} />
+            <span>Markets</span>
+            {openWindowsCount > 0 && (
+              <span className="text-[10px] px-1 py-0.2 bg-bg-base border border-border-base text-text-secondary rounded-none tabular-nums">
                 {openWindowsCount}
               </span>
-            </button>
+            )}
+          </button>
 
-            <button
-              onClick={() => onChangeBasicTab("scorecard")}
-              className={`px-3 py-1 text-[11px] font-mono flex items-center gap-1.5 border-b-2 transition-colors ${
-                basicTab === "scorecard"
-                  ? "border-up-green text-text-primary font-medium"
-                  : "border-transparent text-text-dim hover:text-text-secondary"
-              }`}
-            >
-              <span>Scorecard</span>
-            </button>
+          {/* 2. Terminal */}
+          <button
+            onClick={() => {
+              onChangeView("terminal");
+              onChangeTerminalTab("terminal");
+            }}
+            className={`h-full px-2.5 sm:px-3 flex items-center gap-1.5 border-b-2 transition-colors cursor-pointer shrink-0 ${
+              isTerminalActive
+                ? "border-cyan-eval text-text-primary font-bold"
+                : "border-transparent text-text-dim hover:text-text-secondary"
+            }`}
+          >
+            <Terminal size={13} />
+            <span>Terminal</span>
+          </button>
 
-            <button
-              onClick={() => onChangeBasicTab("positions")}
-              className={`px-3 py-1 text-[11px] font-mono flex items-center gap-1.5 border-b-2 transition-colors ${
-                basicTab === "positions"
-                  ? "border-up-green text-text-primary font-medium"
-                  : "border-transparent text-text-dim hover:text-text-secondary"
-              }`}
-            >
-              <span>Positions</span>
-              {positionsCount > 0 && (
-                <span className="text-[10px] px-1 bg-border-base text-text-secondary">
-                  {positionsCount}
-                </span>
-              )}
-            </button>
-          </div>
-        )}
+          {/* 3. Strategies */}
+          <button
+            onClick={() => {
+              onChangeView("terminal");
+              onChangeTerminalTab("strategy");
+            }}
+            className={`h-full px-2.5 sm:px-3 flex items-center gap-1.5 border-b-2 transition-colors cursor-pointer shrink-0 ${
+              isStrategiesActive
+                ? "border-cyan-eval text-text-primary font-bold"
+                : "border-transparent text-text-dim hover:text-text-secondary"
+            }`}
+          >
+            <Sliders size={13} />
+            <span>Strategies</span>
+          </button>
 
-        {currentView === "terminal" && (
-          <div className="flex items-center h-full gap-1 border-l border-border-base pl-2">
-            <button
-              onClick={() => onChangeTerminalTab("terminal")}
-              className={`px-2.5 py-1 text-[11px] font-mono flex items-center gap-1.5 border-b-2 transition-colors ${
-                terminalTab === "terminal"
-                  ? "border-cyan-eval text-text-primary font-medium"
-                  : "border-transparent text-text-dim hover:text-text-secondary"
-              }`}
-            >
-              <span className="text-cyan-eval">1:</span>
-              <span>sh ({mode}:0)</span>
-            </button>
+          {/* 4. Scorecard */}
+          <button
+            onClick={() => {
+              onChangeView("basic");
+              onChangeBasicTab("scorecard");
+            }}
+            className={`h-full px-2.5 sm:px-3 flex items-center gap-1.5 border-b-2 transition-colors cursor-pointer shrink-0 ${
+              isScorecardActive
+                ? "border-up-green text-text-primary font-bold"
+                : "border-transparent text-text-dim hover:text-text-secondary"
+            }`}
+          >
+            <BarChart3 size={13} />
+            <span>Scorecard</span>
+          </button>
 
-            <button
-              onClick={() => onChangeTerminalTab("markets")}
-              className={`px-2.5 py-1 text-[11px] font-mono flex items-center gap-1.5 border-b-2 transition-colors ${
-                terminalTab === "markets"
-                  ? "border-cyan-eval text-text-primary font-medium"
-                  : "border-transparent text-text-dim hover:text-text-secondary"
-              }`}
-            >
-              <span className="text-text-dim">2:</span>
-              <span>eval (depth)</span>
-              <span className="text-[10px] text-text-dim">[{openWindowsCount}]</span>
-            </button>
-
-            <button
-              onClick={() => onChangeTerminalTab("strategy")}
-              className={`px-2.5 py-1 text-[11px] font-mono flex items-center gap-1.5 border-b-2 transition-colors ${
-                terminalTab === "strategy"
-                  ? "border-cyan-eval text-text-primary font-medium"
-                  : "border-transparent text-text-dim hover:text-text-secondary"
-              }`}
-            >
-              <span className="text-cyan-eval">3:</span>
-              <span>Strategy Library</span>
-              <span className="hidden sm:inline ml-1 px-1 py-0.2 bg-bg-base text-text-dim text-[9px] border border-border-base">
-                PERSISTED
+          {/* 5. Positions */}
+          <button
+            onClick={() => {
+              onChangeView("basic");
+              onChangeBasicTab("positions");
+            }}
+            className={`h-full px-2.5 sm:px-3 flex items-center gap-1.5 border-b-2 transition-colors cursor-pointer shrink-0 ${
+              isPositionsActive
+                ? "border-up-green text-text-primary font-bold"
+                : "border-transparent text-text-dim hover:text-text-secondary"
+            }`}
+          >
+            <Clock size={13} />
+            <span>Positions</span>
+            {positionsCount > 0 && (
+              <span className="text-[10px] px-1 py-0.2 bg-up-green/10 border border-up-green/30 text-up-green font-semibold rounded-none tabular-nums">
+                {positionsCount}
               </span>
-            </button>
+            )}
+          </button>
 
-            <button
-              onClick={() => onChangeTerminalTab("scorecard")}
-              className={`px-2.5 py-1 text-[11px] font-mono flex items-center gap-1.5 border-b-2 transition-colors ${
-                terminalTab === "scorecard"
-                  ? "border-cyan-eval text-text-primary font-medium"
-                  : "border-transparent text-text-dim hover:text-text-secondary"
-              }`}
-            >
-              <span className="text-text-dim">4:</span>
-              <span>scorecard</span>
-            </button>
-
-            <button
-              onClick={() => onChangeTerminalTab("positions")}
-              className={`px-2.5 py-1 text-[11px] font-mono flex items-center gap-1.5 border-b-2 transition-colors ${
-                terminalTab === "positions"
-                  ? "border-cyan-eval text-text-primary font-medium"
-                  : "border-transparent text-text-dim hover:text-text-secondary"
-              }`}
-            >
-              <span className="text-text-dim">5:</span>
-              <span>positions</span>
-              {positionsCount > 0 && (
-                <span className="text-[10px] px-1 bg-border-base text-text-secondary">
-                  {positionsCount}
-                </span>
-              )}
-            </button>
-          </div>
-        )}
+          {/* 6. Overview */}
+          <button
+            onClick={() => onChangeView("landing")}
+            className={`hidden md:flex h-full px-2.5 sm:px-3 items-center gap-1.5 border-b-2 transition-colors cursor-pointer shrink-0 ${
+              isOverviewActive
+                ? "border-text-primary text-text-primary font-bold"
+                : "border-transparent text-text-dim hover:text-text-secondary"
+            }`}
+          >
+            <Home size={13} />
+            <span>Overview</span>
+          </button>
+        </nav>
       </div>
 
-      {/* Right: Network status & RainbowKit Connect */}
-      <div className="flex items-center gap-3 text-[11px] font-mono text-text-dim pr-1">
-        <div className="hidden lg:flex items-center gap-1.5">
-          <span className="text-text-secondary">RPC:</span>
-          <span className="text-text-dim">somnia-shannon</span>
-        </div>
-
-        <div className="hidden sm:block h-3 w-[1px] bg-border-base"></div>
-
-        {/* Live Pulse */}
-        <div className="flex items-center gap-1.5 text-text-secondary">
-          <span className="w-2 h-2 bg-up-green inline-block"></span>
-          <span className="text-text-primary text-[10px]">LIVE // 14ms</span>
-        </div>
+      {/* Right: Mode & Balance Capsule + Connect Wallet */}
+      <div className="flex items-center gap-3 font-mono text-[11px] shrink-0">
+        {/* Mode & Balance Switcher Capsule */}
+        {onToggleMode && (
+          <button
+            onClick={onToggleMode}
+            type="button"
+            className={`h-8 px-2.5 hidden sm:flex items-center gap-2 border transition-colors cursor-pointer ${
+              isPractice
+                ? "bg-bg-base border-border-base hover:border-up-green text-text-secondary hover:text-text-primary"
+                : "bg-down-red/10 border-down-red/40 hover:border-down-red text-down-red"
+            }`}
+            title={
+              isPractice
+                ? "Practice Mode active (simulated capital). Click to switch to Real Mode."
+                : "Real Mode active (real capital at risk). Click to switch to Practice Mode."
+            }
+          >
+            <span
+              className={`w-1.5 h-1.5 rounded-full ${
+                isPractice ? "bg-up-green" : "bg-down-red animate-pulse"
+              }`}
+            ></span>
+            <span className="font-semibold uppercase tracking-wider text-[10px]">
+              {isPractice ? "Practice" : "Real"}
+            </span>
+            <span className="text-text-dim">|</span>
+            <span
+              className={`font-bold tabular-nums ${
+                isPractice ? "text-up-green" : "text-down-red"
+              }`}
+            >
+              {isPractice
+                ? `$${bankroll.toFixed(2)}`
+                : `$${realBalance} USDC`}
+            </span>
+          </button>
+        )}
 
         {/* Dedicated Web3 Wallet Connection & Network Switcher */}
-        <div className="ml-2">
-          <ConnectWalletButton />
-        </div>
+        <ConnectWalletButton />
       </div>
     </header>
   );

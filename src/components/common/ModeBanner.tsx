@@ -1,5 +1,6 @@
 import React from "react";
 import type { TradingMode } from "../../types/index.js";
+import { AlertTriangle } from "lucide-react";
 
 interface ModeBannerProps {
   mode: TradingMode;
@@ -14,87 +15,32 @@ interface ModeBannerProps {
 export function ModeBanner({
   mode,
   onToggleMode,
-  bankroll,
-  realBalance = "0.00",
-  activeRound,
-  currentView,
-  onSwitchView,
 }: ModeBannerProps) {
-  const isPractice = mode === "practice";
+  // In Practice mode, the clean navbar already clearly indicates Practice status and balance.
+  if (mode === "practice") {
+    return null;
+  }
 
+  // In Real mode, display a sleek, institutional-grade risk notice.
   return (
-    <div
-      className={`w-full ${
-        isPractice ? "bg-up-green text-[#0a0a0f]" : "bg-down-red text-[#0a0a0f]"
-      } px-4 py-1.5 flex items-center justify-between font-mono font-bold tracking-tight text-[12px] shrink-0 select-none z-20 border-b border-border-base`}
-    >
-      <div className="flex items-center gap-3">
-        <span className="inline-block px-1.5 py-0.5 bg-[#0a0a0f] text-inherit text-[10px] font-bold">
-          STATE
+    <div className="w-full bg-down-red/15 border-b border-down-red/30 px-4 py-1.5 flex items-center justify-between font-mono text-[11px] text-down-red z-20 select-none shrink-0">
+      <div className="flex items-center gap-2">
+        <span className="w-2 h-2 bg-down-red rounded-full animate-pulse inline-block"></span>
+        <span className="font-bold tracking-wide flex items-center gap-1">
+          <AlertTriangle size={12} />
+          REAL CAPITAL MODE ACTIVE
         </span>
-        <span className="tracking-wide">
-          {isPractice
-            ? "MODE: PRACTICE — SIMULATED, ZERO CAPITAL AT RISK"
-            : "MODE: REAL — DIRECT WALLET SIGNING, REAL CAPITAL AT RISK"}
+        <span className="text-text-secondary hidden md:inline">
+          — Live on-chain orders on Somnia Shannon (50312). Capital is at risk.
         </span>
-        {activeRound && (
-          <span className="font-normal text-[#0a0a0f]/80 hidden md:inline">
-            | ORACLE ROUND: #{activeRound} | CADENCE: MULTI-WINDOW
-          </span>
-        )}
       </div>
 
-      <div className="flex items-center gap-3 text-[11px]">
-        {/* Quick View Switcher button right on banner */}
-        {currentView && onSwitchView && (
-          <div className="hidden sm:flex items-center gap-2 mr-2 border-r border-[#0a0a0f]/20 pr-3">
-            {currentView === "basic" && (
-              <button
-                onClick={() => onSwitchView("terminal")}
-                className="bg-[#0a0a0f]/15 hover:bg-[#0a0a0f]/25 px-2 py-0.5 text-[10px] font-bold text-[#0a0a0f] uppercase transition-colors"
-              >
-                Switch to Pro Terminal →
-              </button>
-            )}
-            {currentView === "terminal" && (
-              <button
-                onClick={() => onSwitchView("basic")}
-                className="bg-[#0a0a0f]/15 hover:bg-[#0a0a0f]/25 px-2 py-0.5 text-[10px] font-bold text-[#0a0a0f] uppercase transition-colors"
-              >
-                Switch to Basic View →
-              </button>
-            )}
-            {currentView === "landing" && (
-              <button
-                onClick={() => onSwitchView("basic")}
-                className="bg-[#0a0a0f]/15 hover:bg-[#0a0a0f]/25 px-2 py-0.5 text-[10px] font-bold text-[#0a0a0f] uppercase transition-colors"
-              >
-                Enter Basic Mode →
-              </button>
-            )}
-          </div>
-        )}
-
-        <span className="font-normal hidden md:inline">
-          {isPractice ? (
-            <>
-              VIRTUAL BAL: <span className="font-bold">${bankroll.toFixed(2)} USDso</span>
-            </>
-          ) : (
-            <>
-              WALLET BAL: <span className="font-bold">${realBalance} tUSDC</span>
-            </>
-          )}
-        </span>
-
-        <button
-          onClick={onToggleMode}
-          className="bg-[#0a0a0f] px-2.5 py-0.5 text-[11px] font-mono font-semibold transition-colors border border-[#0a0a0f]"
-          style={{ color: isPractice ? "#00e676" : "#ff5252" }}
-        >
-          {isPractice ? "SWITCH TO REAL →" : "← SWITCH TO PRACTICE"}
-        </button>
-      </div>
+      <button
+        onClick={onToggleMode}
+        className="px-2.5 py-0.5 bg-down-red text-[#0a0a0f] font-bold hover:bg-down-red/90 transition-colors text-[10px] uppercase cursor-pointer"
+      >
+        ← Return to Practice Simulation
+      </button>
     </div>
   );
 }

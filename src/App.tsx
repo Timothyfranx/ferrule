@@ -251,6 +251,9 @@ export default function App() {
         terminalTab={terminalTab}
         onChangeTerminalTab={setTerminalTab}
         mode={mode}
+        onToggleMode={handleToggleMode}
+        bankroll={practiceService.getBankroll()}
+        realBalance={realUsdcBalance}
         bufferLineCount={bufferLineCount}
         activeWatchersCount={watcherService.getWatchers().length}
         openWindowsCount={windows.length}

@@ -118,8 +118,12 @@ export function LandingScreen({
                   DREAMDEX::{primaryWindow ? `${primaryWindow.asset}-USD` : "BTC-USD"}
                 </span>
               </div>
-              <div className="flex items-center gap-4 text-text-dim text-[11px]">
-                <span>ORACLE LATENCY: <span className="text-text-secondary">14ms</span></span>
+              <div className="flex items-center gap-3 text-text-dim text-[11px]">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 bg-up-green rounded-full inline-block"></span>
+                  <span className="text-up-green font-medium">CHAIN: 50312</span>
+                </span>
+                <span className="hidden sm:inline">•</span>
                 <span className="hidden sm:inline">STATE: <span className="text-up-green">TRADING_OPEN</span></span>
               </div>
             </div>
