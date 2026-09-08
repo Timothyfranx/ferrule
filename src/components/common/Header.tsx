@@ -1,6 +1,6 @@
 import React from "react";
 import { ConnectWalletButton } from "./ConnectWalletButton.js";
-import { Layers, Terminal, Home, BarChart3, Clock, Sliders } from "lucide-react";
+import { Layers, Terminal, Home, BarChart3, Clock, Sliders, HelpCircle } from "lucide-react";
 import type { TradingMode } from "../../types/index.js";
 
 export type AppView = "landing" | "basic" | "terminal";
@@ -22,6 +22,7 @@ export interface HeaderProps {
   activeWatchersCount?: number;
   openWindowsCount: number;
   positionsCount: number;
+  onOpenHowItWorks?: () => void;
 }
 
 export function Header({
@@ -37,6 +38,7 @@ export function Header({
   realBalance = "0.00",
   openWindowsCount,
   positionsCount,
+  onOpenHowItWorks,
 }: HeaderProps) {
   const isPractice = mode === "practice";
 
@@ -191,8 +193,20 @@ export function Header({
         </nav>
       </div>
 
-      {/* Right: Layout Switcher + Mode & Balance Capsule + Connect Wallet */}
+      {/* Right: How It Works + Layout Switcher + Mode & Balance Capsule + Connect Wallet */}
       <div className="flex items-center gap-2 sm:gap-3 font-mono text-[11px] shrink-0">
+        {/* How It Works Guide Trigger */}
+        {onOpenHowItWorks && (
+          <button
+            onClick={onOpenHowItWorks}
+            className="h-7 px-2 sm:px-2.5 rounded-[3px] flex items-center gap-1.5 text-[11px] font-mono text-text-secondary hover:text-cyan-eval bg-bg-base border border-border-base hover:border-cyan-eval/50 transition-all cursor-pointer shadow-xs shrink-0"
+            title="Open Ferrule Protocol & System Architecture Guide"
+          >
+            <HelpCircle size={12} className="text-cyan-eval" />
+            <span className="hidden sm:inline">How It Works</span>
+          </button>
+        )}
+
         {/* Layout Switcher Pill */}
         <div className="hidden lg:flex items-center bg-bg-base border border-border-base rounded-[3px] p-0.5 text-[10px] font-mono">
           <button

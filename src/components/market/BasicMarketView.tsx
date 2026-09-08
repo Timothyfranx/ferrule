@@ -10,7 +10,8 @@ import {
   Flame,
   Zap,
   Layers,
-  ExternalLink
+  ExternalLink,
+  HelpCircle
 } from "lucide-react";
 import type { OpenWindow, CallDirection, Call, TradingMode } from "../../types/index.js";
 
@@ -21,6 +22,7 @@ interface BasicMarketViewProps {
   recentCalls: Call[];
   loading: boolean;
   mode: TradingMode;
+  onOpenHowItWorks?: () => void;
 }
 
 export function BasicMarketView({
@@ -30,6 +32,7 @@ export function BasicMarketView({
   recentCalls,
   loading,
   mode,
+  onOpenHowItWorks,
 }: BasicMarketViewProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [assetFilter, setAssetFilter] = useState<"ALL" | "BTC" | "ETH">("ALL");
@@ -120,6 +123,19 @@ export function BasicMarketView({
                 {mode.toUpperCase()}
               </strong>
             </span>
+            {onOpenHowItWorks && (
+              <>
+                <span>•</span>
+                <button
+                  onClick={onOpenHowItWorks}
+                  className="hover:text-cyan-eval text-text-secondary flex items-center gap-1 cursor-pointer transition-colors"
+                  title="Open Protocol Architecture & Guide"
+                >
+                  <HelpCircle size={11} className="text-cyan-eval" />
+                  <span>How It Works</span>
+                </button>
+              </>
+            )}
           </div>
         </div>
 

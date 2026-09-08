@@ -25,6 +25,7 @@ interface TerminalEmulatorProps {
   walletAddress?: string | null;
   onOpenTradeModal: (window: OpenWindow, direction: "UP" | "DOWN", stake: number) => void;
   onLineCountChange?: (count: number) => void;
+  onOpenHowItWorks?: () => void;
 }
 
 const terminalService = new TerminalService();
@@ -41,6 +42,7 @@ export function TerminalEmulator({
   walletAddress,
   onOpenTradeModal,
   onLineCountChange,
+  onOpenHowItWorks,
 }: TerminalEmulatorProps) {
   const [cwd, setCwd] = useState<string>(terminalService.getCwd());
   const [lines, setLines] = useState<TerminalLine[]>([
@@ -87,6 +89,7 @@ export function TerminalEmulator({
       watcherService,
       walletAddress,
       onTriggerModal: onOpenTradeModal,
+      onTriggerHowItWorks: onOpenHowItWorks,
     });
 
     // Update active cwd in emulator state

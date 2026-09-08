@@ -13,7 +13,9 @@ import {
   Zap,
   Play,
   TrendingUp,
-  TrendingDown
+  TrendingDown,
+  HelpCircle,
+  BookOpen
 } from "lucide-react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import type { OpenWindow, TradingMode, CalibrationScorecard } from "../../types/index.js";
@@ -27,6 +29,7 @@ interface LandingScreenProps {
   onToggleMode: () => void;
   bankroll: number;
   scorecard: CalibrationScorecard;
+  onOpenHowItWorks?: () => void;
 }
 
 export function LandingScreen({
@@ -38,6 +41,7 @@ export function LandingScreen({
   onToggleMode,
   bankroll,
   scorecard,
+  onOpenHowItWorks,
 }: LandingScreenProps) {
   const isPractice = mode === "practice";
   const primaryWindow = windows.length > 0 ? windows[0] : null;
@@ -84,6 +88,16 @@ export function LandingScreen({
               <Layers size={16} className="text-up-green" />
               <span>Launch Basic View</span>
             </button>
+
+            {onOpenHowItWorks && (
+              <button
+                onClick={onOpenHowItWorks}
+                className="w-full sm:w-auto h-11 px-4 bg-bg-raised border border-border-flat hover:border-cyan-eval/60 text-text-secondary hover:text-cyan-eval font-mono text-xs uppercase tracking-wider rounded-[3px] transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+              >
+                <HelpCircle size={14} className="text-cyan-eval" />
+                <span>How It Works</span>
+              </button>
+            )}
 
             <button
               onClick={onOpenModeSelector}
@@ -290,16 +304,28 @@ export function LandingScreen({
       {/* 3. "How It Works" Execution Flow */}
       <section className="w-full border-b border-border-flat py-16 px-4 sm:px-6 bg-bg-base">
         <div className="max-w-6xl mx-auto">
-          <div className="max-w-2xl mb-10">
-            <span className="font-mono text-[11px] text-text-dim uppercase tracking-widest block mb-2">
-              Execution Flow
-            </span>
-            <h2 className="font-sans text-2xl sm:text-3xl text-text-primary font-semibold mb-3">
-              How It Works
-            </h2>
-            <p className="font-sans text-sm text-text-secondary">
-              A structured progression designed to turn subjective speculation into systematic precision.
-            </p>
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
+            <div className="max-w-2xl">
+              <span className="font-mono text-[11px] text-text-dim uppercase tracking-widest block mb-2">
+                Execution Flow
+              </span>
+              <h2 className="font-sans text-2xl sm:text-3xl text-text-primary font-semibold mb-3">
+                How It Works
+              </h2>
+              <p className="font-sans text-sm text-text-secondary">
+                A structured progression designed to turn subjective speculation into systematic precision.
+              </p>
+            </div>
+
+            {onOpenHowItWorks && (
+              <button
+                onClick={onOpenHowItWorks}
+                className="self-start sm:self-auto h-9 px-4 rounded-[3px] bg-bg-raised border border-border-interactive hover:border-cyan-eval/60 text-cyan-eval font-mono text-xs uppercase tracking-wider font-semibold flex items-center gap-2 transition-all cursor-pointer shadow-xs"
+              >
+                <BookOpen size={14} />
+                <span>Open Full Architecture Guide</span>
+              </button>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -370,6 +396,14 @@ export function LandingScreen({
           <button onClick={onEnterBasic} className="text-text-secondary hover:text-text-primary">
             Launch Basic View
           </button>
+          {onOpenHowItWorks && (
+            <>
+              <span>/</span>
+              <button onClick={onOpenHowItWorks} className="text-text-secondary hover:text-cyan-eval">
+                How It Works
+              </button>
+            </>
+          )}
           <span>/</span>
           <a 
             href="https://prd.oracle.somnia.host" 

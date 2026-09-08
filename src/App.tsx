@@ -23,7 +23,8 @@ import {
   CalibrationDashboard, 
   PositionsTable,
   StrategyLibrary,
-  MobileBottomNav
+  MobileBottomNav,
+  HowItWorksModal
 } from "./components/index.js";
 import { CANONICAL_CONTRACTS } from "./config/constants.js";
 import type { 
@@ -46,6 +47,7 @@ export default function App() {
   const [basicTab, setBasicTab] = useState<"markets" | "scorecard" | "positions">("markets");
   const [terminalTab, setTerminalTab] = useState<"terminal" | "markets" | "strategy" | "scorecard" | "positions">("terminal");
   const [showModeSelector, setShowModeSelector] = useState(false);
+  const [showHowItWorks, setShowHowItWorks] = useState(false);
 
   const [windows, setWindows] = useState<OpenWindow[]>([]);
   const [calls, setCalls] = useState<Call[]>([]);
@@ -268,6 +270,7 @@ export default function App() {
         activeWatchersCount={watcherService.getWatchers().length}
         openWindowsCount={windows.length}
         positionsCount={positionsCount}
+        onOpenHowItWorks={() => setShowHowItWorks(true)}
       />
 
       {/* 2. Sticky Mode Banner (Unmissable Solid Fill) */}
@@ -294,6 +297,7 @@ export default function App() {
             onToggleMode={handleToggleMode}
             bankroll={practiceService.getBankroll()}
             scorecard={scorecard}
+            onOpenHowItWorks={() => setShowHowItWorks(true)}
           />
         )}
 
@@ -308,6 +312,7 @@ export default function App() {
                 recentCalls={calls.filter((c) => c.mode === mode)}
                 loading={loading}
                 mode={mode}
+                onOpenHowItWorks={() => setShowHowItWorks(true)}
               />
             )}
 
@@ -347,6 +352,7 @@ export default function App() {
                 walletAddress={address}
                 onOpenTradeModal={handleOpenTradeModal}
                 onLineCountChange={setBufferLineCount}
+                onOpenHowItWorks={() => setShowHowItWorks(true)}
               />
             )}
 
@@ -437,6 +443,14 @@ export default function App() {
           setShowModeSelector(false);
         }}
         currentMode={currentView === "terminal" ? "terminal" : "basic"}
+      />
+
+      {/* How It Works Architecture & Protocol Guide Modal */}
+      <HowItWorksModal
+        isOpen={showHowItWorks}
+        onClose={() => setShowHowItWorks(false)}
+        onLaunchTerminal={handleEnterPro}
+        onLaunchBasic={handleEnterBasic}
       />
 
       {/* Risk Transition Warning Modal */}

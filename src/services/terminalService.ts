@@ -151,6 +151,7 @@ export class TerminalService {
       watcherService: WatcherService;
       walletAddress?: string | null;
       onTriggerModal?: (window: OpenWindow, direction: "UP" | "DOWN", stake: number) => void;
+      onTriggerHowItWorks?: () => void;
     }
   ): Promise<TerminalLine[]> {
     const input = rawInput.trim();
@@ -207,6 +208,7 @@ CORE COMMANDS:
   positions                 View open and resolved call ledger with PnL
   scorecard                 Print Brier calibration scorecard and empirical accuracy
   mode <practice|real>      Switch trading environment
+  guide | how-it-works      Open the interactive architecture and protocol guide overlay
 
 AUTOMATED STRATEGY WATCHERS:
   watch <symbol> if <condition> then suggest <action>
@@ -230,6 +232,34 @@ SHELL & SCRIPT UTILITIES:
   env                       Display runtime contract addresses and chain configuration
   date                      Current UTC system timestamp
   clear | cls               Clear the terminal screen
+`,
+          timestamp: now,
+        },
+      ];
+    }
+
+    // 2b. GUIDE / HOW-IT-WORKS COMMAND
+    if (cmd === "guide" || cmd === "how-it-works" || cmd === "howitworks" || cmd === "docs" || cmd === "architecture") {
+      context.onTriggerHowItWorks?.();
+      return [
+        {
+          id: `line_${Date.now()}_1`,
+          type: "system",
+          text: `[GUIDE] Opening Ferrule Protocol & System Architecture Overlay...`,
+          timestamp: now,
+        },
+        {
+          id: `line_${Date.now()}_2`,
+          type: "output",
+          text: `
+FERRULE SYSTEM OVERVIEW:
+- Central Limit Order Book: Somnia DreamDEX binary markets (Chain ID: 50312)
+- Price Feed Resolution: Pyth Network sub-second oracles
+- MEV Protection Gate: Orders lock 45s prior to contract expiry
+- Calibration Score: Continuous Brier index tracking (B = (1/N) * sum(f - o)^2)
+- Automated Tooling: Background watcher daemons & bash strategy scripts
+
+Interactive overlay launched. Press [ESC] in modal to return to terminal.
 `,
           timestamp: now,
         },

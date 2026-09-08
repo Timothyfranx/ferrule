@@ -16,4 +16,4 @@ export * from "./scorecard/CalibrationDashboard.js";
 export * from "./scorecard/BasicScorecard.js";
 export * from "./history/PositionsTable.js";
 export * from "./strategy/StrategyLibrary.js";
-
+export * from "./common/HowItWorksModal.js";
