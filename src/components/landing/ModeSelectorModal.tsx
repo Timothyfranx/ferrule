@@ -84,15 +84,15 @@ export function ModeSelectorModal({
               <div className="space-y-2 my-5 py-3 border-y border-border-flat text-xs text-text-secondary">
                 <div className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 bg-cyan-eval"></span>
-                  <span>Full VT100 interactive live terminal emulator</span>
+                  <span>Bloomberg-style split cockpit: Shell + Live L2 Depth Ladder (DOM)</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 bg-cyan-eval"></span>
-                  <span>Background event watchers with suggestion cards</span>
+                  <span>Continuous Black-Scholes Φ(d₂) fair value & Quarter-Kelly sizer</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 bg-cyan-eval"></span>
-                  <span>Virtual scripts: <code className="text-cyan-eval">run /strategies/fade_crowd.sh</code></span>
+                  <span>Autonomous settlement rollover rules (Compound / Preserve / Sweep)</span>
                 </div>
               </div>
             </div>

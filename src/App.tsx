@@ -353,6 +353,9 @@ export default function App() {
                 onOpenTradeModal={handleOpenTradeModal}
                 onLineCountChange={setBufferLineCount}
                 onOpenHowItWorks={() => setShowHowItWorks(true)}
+                scorecard={scorecard}
+                bankroll={practiceService.getBankroll()}
+                onClaimWinnings={handleClaimWinnings}
               />
             )}
 

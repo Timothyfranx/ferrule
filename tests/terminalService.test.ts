@@ -133,5 +133,44 @@ describe("TerminalService — Shell & Script Interpreter", () => {
     const resetRes = await terminal.executeCommand("resetfs", context);
     expect(resetRes[0].text).toContain("Virtual filesystem reset");
   });
+
+  it("evaluates 'dom' and renders L2 Depth Ladder and OIR", async () => {
+    const lines = await terminal.executeCommand("dom", context);
+    expect(lines.length).toBe(1);
+    expect(lines[0].type).toBe("table");
+    expect(lines[0].text).toContain("L2 DEPTH LADDER (DOM)");
+    expect(lines[0].text).toContain("ORDER IMBALANCE RATIO (OIR)");
+    expect(lines[0].text).toContain("ASK");
+    expect(lines[0].text).toContain("BID");
+  });
+
+  it("evaluates 'edge' and calculates Black-Scholes Φ(d₂) fair value and bps", async () => {
+    const lines = await terminal.executeCommand("edge", context);
+    expect(lines.length).toBe(1);
+    expect(lines[0].text).toContain("QUANTITATIVE FAIR-VALUE RADAR — Black-Scholes Φ(d₂)");
+    expect(lines[0].text).toContain("FAIR PROBABILITY (UP)");
+    expect(lines[0].text).toContain("MISPRICING EDGE");
+    expect(lines[0].text).toContain("QUARTER-KELLY SIZER");
+  });
+
+  it("evaluates 'kelly' and outputs position sizing matrix", async () => {
+    const lines = await terminal.executeCommand("kelly", context);
+    expect(lines.length).toBe(1);
+    expect(lines[0].text).toContain("KELLY CRITERION SIZING MATRIX");
+    expect(lines[0].text).toContain("Quarter-Kelly Sizing Tiers");
+  });
+
+  it("evaluates 'roll' to switch rollover policies", async () => {
+    const lines = await terminal.executeCommand("roll compound", context);
+    expect(lines[0].text).toContain('Policy updated to "COMPOUND"');
+  });
+
+  it("evaluates 'focus' to lock active market in cockpit", async () => {
+    let focused = "";
+    const ctx = { ...context, onFocusMarket: (id: string) => { focused = id; } };
+    const lines = await terminal.executeCommand("focus BTC", ctx);
+    expect(lines[0].text).toContain("[FOCUS] Active orderflow cockpit locked onto BTC/USDC");
+    expect(focused).toBe(mockWindow.marketId);
+  });
 });
 
