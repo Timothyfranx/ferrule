@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { useAccount, useChainId, useSwitchChain } from "wagmi";
 import { Wallet, AlertTriangle, ChevronDown } from "lucide-react";
 import { SOMNIA_CHAIN_ID, SOMNIA_RPC_URL, SOMNIA_EXPLORER_URL } from "../../config/constants.js";
 
@@ -18,8 +19,14 @@ export async function addSomniaToWallet() {
     });
     return true;
   } catch (switchError: any) {
-    // Error 4902 indicates chain has not been added yet
-    if (switchError.code === 4902 || switchError?.data?.originalError?.code === 4902) {
+    // Error 4902 or unrecognized chain indicates chain has not been added yet
+    const isUnrecognized = 
+      switchError?.code === 4902 || 
+      switchError?.data?.originalError?.code === 4902 ||
+      switchError?.message?.includes("Unrecognized chain ID") ||
+      switchError?.message?.includes("4902");
+
+    if (isUnrecognized) {
       try {
         await ethereum.request({
           method: "wallet_addEthereumChain",
@@ -50,10 +57,20 @@ export async function addSomniaToWallet() {
 
 export function ConnectWalletButton() {
   const [isSwitching, setIsSwitching] = useState(false);
+  const { chainId: wagmiAccountChainId } = useAccount();
+  const currentChainId = useChainId();
+  const { switchChainAsync } = useSwitchChain();
 
   const handleDirectSwitch = async () => {
     setIsSwitching(true);
     try {
+      if (switchChainAsync) {
+        await switchChainAsync({ chainId: SOMNIA_CHAIN_ID });
+      } else {
+        await addSomniaToWallet();
+      }
+    } catch (switchErr) {
+      console.warn("Wagmi switchChain error, falling back to wallet RPC:", switchErr);
       await addSomniaToWallet();
     } finally {
       setIsSwitching(false);
@@ -71,7 +88,7 @@ export function ConnectWalletButton() {
         mounted,
       }: any) => {
         const ready = mounted;
-        const connected = ready && account && chain;
+        const connected = ready && Boolean(account);
 
         if (!ready) {
           return (
@@ -96,8 +113,32 @@ export function ConnectWalletButton() {
           );
         }
 
-        // 2. CONNECTED BUT UNSUPPORTED NETWORK (e.g. user is on Ethereum Mainnet / Sepolia)
-        if (chain.unsupported || chain.id !== SOMNIA_CHAIN_ID) {
+        // Robust multi-source chain ID detection
+        const rawEthereumChainId =
+          typeof window !== "undefined" && (window as any).ethereum?.chainId
+            ? (window as any).ethereum.chainId
+            : null;
+
+        const parsedEthChainId = rawEthereumChainId
+          ? (typeof rawEthereumChainId === "string" && rawEthereumChainId.startsWith("0x")
+              ? parseInt(rawEthereumChainId, 16)
+              : Number(rawEthereumChainId))
+          : null;
+
+        const effectiveChainId =
+          (chain?.id ? Number(chain.id) : null) ??
+          (wagmiAccountChainId ? Number(wagmiAccountChainId) : null) ??
+          (currentChainId ? Number(currentChainId) : null) ??
+          parsedEthChainId;
+
+        // Valid Somnia chain IDs (Shannon testnet 50312, or local/devnet 5031)
+        const isSomnia =
+          effectiveChainId === SOMNIA_CHAIN_ID ||
+          effectiveChainId === 5031 ||
+          parsedEthChainId === SOMNIA_CHAIN_ID;
+
+        // 2. CONNECTED BUT NOT ON SOMNIA SHANNON
+        if (!isSomnia) {
           return (
             <div className="flex items-center gap-1">
               <button
