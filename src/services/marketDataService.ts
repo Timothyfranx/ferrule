@@ -148,6 +148,7 @@ export class MarketDataService {
           backingUsdc,
           creator: m.creator,
           marketAddress: m.marketAddress,
+          orderBook,
         };
       })
     );

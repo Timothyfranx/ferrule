@@ -31,45 +31,75 @@ export function L2DepthLadder({ window: w, onSelectCall, selectedStake = 25 }: L
     let runningAskTotal = 0;
     let runningBidTotal = 0;
 
-    // Generate 5 Asks (UP Sellers / Asks descending towards spread)
-    const askLevels = [0.04, 0.03, 0.02, 0.01, 0.00];
+    const realAsks = w.orderBook?.yesAsks || [];
+    const realBids = w.orderBook?.yesBids || [];
+
     const askRows: LadderRow[] = [];
-    for (let i = 0; i < askLevels.length; i++) {
-      const p = Math.min(0.99, Number((upAsk + askLevels[i]).toFixed(3)));
-      const sz = Math.round(askVol * (0.15 + (i * 0.05)));
-      runningAskTotal += sz;
-      askRows.push({
-        price: p,
-        size: sz,
-        totalSize: runningAskTotal,
-        type: "ASK",
-        depthPercent: 0,
-      });
+    if (realAsks.length > 0) {
+      // Direct on-chain asks sorted descending (highest price on top)
+      const sortedAsks = [...realAsks].sort((a, b) => b.price - a.price);
+      for (const a of sortedAsks) {
+        runningAskTotal += Math.round(a.quantity);
+        askRows.push({
+          price: Number(a.price.toFixed(3)),
+          size: Math.round(a.quantity),
+          totalSize: runningAskTotal,
+          type: "ASK",
+          depthPercent: 0,
+        });
+      }
+    } else {
+      const askLevels = [0.03, 0.02, 0.01, 0.00];
+      for (let i = 0; i < askLevels.length; i++) {
+        const p = Math.min(0.99, Number((upAsk + askLevels[i]).toFixed(3)));
+        const sz = Math.round(askVol * (0.2 + (i * 0.05)));
+        runningAskTotal += sz;
+        askRows.push({
+          price: p,
+          size: sz,
+          totalSize: runningAskTotal,
+          type: "ASK",
+          depthPercent: 0,
+        });
+      }
     }
 
-    // Generate 5 Bids (UP Buyers / Bids descending away from spread)
-    const bidLevels = [0.00, 0.01, 0.02, 0.03, 0.04];
     const bidRows: LadderRow[] = [];
-    for (let i = 0; i < bidLevels.length; i++) {
-      const p = Math.max(0.01, Number((upBid - bidLevels[i]).toFixed(3)));
-      const sz = Math.round(bidVol * (0.15 + (i * 0.05)));
-      runningBidTotal += sz;
-      bidRows.push({
-        price: p,
-        size: sz,
-        totalSize: runningBidTotal,
-        type: "BID",
-        depthPercent: 0,
-      });
+    if (realBids.length > 0) {
+      // Direct on-chain bids sorted descending (highest bid near spread)
+      const sortedBids = [...realBids].sort((a, b) => b.price - a.price);
+      for (const b of sortedBids) {
+        runningBidTotal += Math.round(b.quantity);
+        bidRows.push({
+          price: Number(b.price.toFixed(3)),
+          size: Math.round(b.quantity),
+          totalSize: runningBidTotal,
+          type: "BID",
+          depthPercent: 0,
+        });
+      }
+    } else {
+      const bidLevels = [0.00, 0.01, 0.02, 0.03];
+      for (let i = 0; i < bidLevels.length; i++) {
+        const p = Math.max(0.01, Number((upBid - bidLevels[i]).toFixed(3)));
+        const sz = Math.round(bidVol * (0.2 + (i * 0.05)));
+        runningBidTotal += sz;
+        bidRows.push({
+          price: p,
+          size: sz,
+          totalSize: runningBidTotal,
+          type: "BID",
+          depthPercent: 0,
+        });
+      }
     }
 
     const highestVol = Math.max(runningAskTotal, runningBidTotal, 1);
 
     // Normalize depth percent for background bars
-    askRows.forEach(r => { r.depthPercent = Math.min(100, Math.round((r.size / highestVol) * 250)); });
-    bidRows.forEach(r => { r.depthPercent = Math.min(100, Math.round((r.size / highestVol) * 250)); });
+    askRows.forEach(r => { r.depthPercent = Math.min(100, Math.round((r.size / highestVol) * 100)); });
+    bidRows.forEach(r => { r.depthPercent = Math.min(100, Math.round((r.size / highestVol) * 100)); });
 
-    // Combine: Asks on top (highest price at top), Spread in middle, Bids on bottom
     rows.push(...askRows);
     rows.push(...bidRows);
 

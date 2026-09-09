@@ -40,6 +40,7 @@ export interface OpenWindow {
   backingUsdc?: string;
   creator?: string | null;
   marketAddress?: string | null;
+  orderBook?: BinaryOrderBook;
 }
 
 export interface SettledMarketInfo {

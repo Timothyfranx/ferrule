@@ -261,7 +261,7 @@ export function HowItWorksModal({
                       <span className="text-text-primary truncate font-mono text-[10px]">{CANONICAL_CONTRACTS.oracleHub}</span>
                     </div>
                     <div className="flex flex-col sm:flex-row sm:items-between justify-between gap-1 py-1">
-                      <span className="text-text-secondary">Mock USDC Settlement Token:</span>
+                      <span className="text-text-secondary">Somnia Testnet USDC (tUSDC):</span>
                       <span className="text-text-primary truncate font-mono text-[10px]">{CANONICAL_CONTRACTS.testUsdc}</span>
                     </div>
                   </div>
