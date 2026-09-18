@@ -51,8 +51,19 @@ export function MinimalTradeView({
   }, [windows, selectedAsset, selectedInterval]);
 
   // Pricing & payouts
-  const currentPrice = activeWindow?.bestUpAsk ? (activeWindow.bestUpAsk * 100000) : 64250.0;
-  const strikePrice = activeWindow?.bestDownAsk ? (activeWindow.bestDownAsk * 99500) : 64180.0;
+  const currentPrice = useMemo(() => {
+    if (activeWindow?.strike) return parseFloat(activeWindow.strike);
+    if (selectedAsset === "BTC") return 64250.0;
+    if (selectedAsset === "ETH") return 3450.0;
+    return 1.0850;
+  }, [activeWindow, selectedAsset]);
+
+  const strikePrice = useMemo(() => {
+    if (selectedAsset === "BTC") return 64180.0;
+    if (selectedAsset === "ETH") return 3440.0;
+    return 1.0842;
+  }, [selectedAsset]);
+
   const upProbability = activeWindow ? Math.round(activeWindow.upLeanProbability * 100) : 62;
   const downProbability = 100 - upProbability;
 

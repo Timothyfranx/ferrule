@@ -140,7 +140,34 @@ export default function App() {
   const { data: walletClient } = useWalletClient();
 
   const [mode, setMode] = useState<TradingMode>("practice");
-  const [activeTab, setActiveTab] = useState<FerrArcNavTab>("trade");
+  const [activeTab, setActiveTab] = useState<FerrArcNavTab>(() => {
+    if (typeof window !== "undefined") {
+      const hash = window.location.hash.replace("#", "").toLowerCase();
+      if (hash === "agent" || hash === "stream" || hash === "trade") {
+        return hash as FerrArcNavTab;
+      }
+    }
+    return "trade";
+  });
+
+  useEffect(() => {
+    function onHashChange() {
+      const hash = window.location.hash.replace("#", "").toLowerCase();
+      if (hash === "agent" || hash === "stream" || hash === "trade") {
+        setActiveTab(hash as FerrArcNavTab);
+      }
+    }
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, []);
+
+  const handleTabChange = useCallback((tab: FerrArcNavTab) => {
+    setActiveTab(tab);
+    if (typeof window !== "undefined") {
+      window.location.hash = tab;
+    }
+  }, []);
+
   const [showHowItWorks, setShowHowItWorks] = useState(false);
   const [showTransitionModal, setShowTransitionModal] = useState(false);
 
@@ -309,7 +336,7 @@ export default function App() {
       {/* 1. Header (Minimalist Tabs + Quiet Mode Toggle + Wallet) */}
       <Header
         activeTab={activeTab}
-        onChangeTab={setActiveTab}
+        onChangeTab={handleTabChange}
         mode={mode}
         onToggleMode={handleToggleMode}
         bankroll={practiceService.getBankroll()}
@@ -355,7 +382,7 @@ export default function App() {
       {/* 4. Mobile Bottom Navigation Bar */}
       <MobileBottomNav
         activeTab={activeTab}
-        onChangeTab={setActiveTab}
+        onChangeTab={handleTabChange}
         onOpenHowItWorks={() => setShowHowItWorks(true)}
       />
 
@@ -363,8 +390,8 @@ export default function App() {
       <HowItWorksModal
         isOpen={showHowItWorks}
         onClose={() => setShowHowItWorks(false)}
-        onLaunchTerminal={() => setActiveTab("trade")}
-        onLaunchBasic={() => setActiveTab("trade")}
+        onLaunchTerminal={() => handleTabChange("trade")}
+        onLaunchBasic={() => handleTabChange("trade")}
       />
 
       {/* Risk Transition Warning Modal */}
