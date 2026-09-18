@@ -65,7 +65,7 @@ export function TerminalEmulator({
     {
       id: "initial_0",
       type: "system",
-      text: "[SYS] Connected to Somnia Shannon CLOB (Chain ID: 50312). Institutional Pro Terminal online.",
+      text: "[SYS] Connected to Arc L1 Mainnet (Chain ID: 5042). Institutional Terminal online.",
       timestamp: new Date().toTimeString().slice(0, 8),
     },
     {
@@ -182,7 +182,7 @@ export function TerminalEmulator({
         <div className="flex items-center gap-2">
           <span className="font-bold text-text-primary">THE PRO TERMINAL</span>
           <span className="text-[10px] text-text-dim px-1 bg-bg-base border border-border-subtle">
-            Somnia Shannon CLOB 50312
+            Arc L1 Mainnet 5042
           </span>
         </div>
 

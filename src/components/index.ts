@@ -26,3 +26,4 @@ export * from "./cockpit/AuditModal.js";
 export * from "./ferrarc/MinimalTradeView.js";
 export * from "./ferrarc/AgentGatewayView.js";
 export * from "./ferrarc/StreamFlowView.js";
+export * from "./ferrarc/PolymarketGridView.js";

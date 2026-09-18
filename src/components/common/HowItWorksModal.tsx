@@ -11,7 +11,7 @@ import {
   Code2,
   Check
 } from "lucide-react";
-import { SOMNIA_CHAIN_ID, CANONICAL_CONTRACTS } from "../../config/constants.js";
+import { ARC_CHAIN_ID, FERRARC_CONTRACTS } from "../../config/constants.js";
 
 interface HowItWorksModalProps {
   isOpen: boolean;
@@ -35,8 +35,8 @@ const CHAPTERS: Chapter[] = [
   {
     id: "clob",
     number: "01",
-    title: "Somnia CLOB Engine",
-    subtitle: "On-Chain Central Limit Order Book & Pyth Oracles",
+    title: "Arc L1 Event Engine",
+    subtitle: "Native 18-Decimal USDC Staking & Pyth Oracles",
     tag: "MARKET ARCHITECTURE",
     icon: Cpu,
   },
@@ -186,7 +186,7 @@ export function HowItWorksModal({
           {/* Right Column: Scrollable Chapter Content */}
           <div className="flex-1 p-4 sm:p-7 overflow-y-auto font-sans select-text">
             
-            {/* CHAPTER 01: SOMNIA CLOB ENGINE */}
+            {/* CHAPTER 01: ARC L1 EVENT ENGINE */}
             {activeChapter === "clob" && (
               <div className="space-y-6 max-w-3xl">
                 <div className="border-b border-border-base pb-4">
@@ -194,26 +194,26 @@ export function HowItWorksModal({
                     CHAPTER 01 // CORE INFRASTRUCTURE
                   </span>
                   <h2 className="text-xl sm:text-2xl font-bold text-text-primary">
-                    Somnia DreamDEX Central Limit Order Book
+                    Arc L1 Native Event Engine
                   </h2>
                   <p className="text-xs sm:text-sm text-text-secondary mt-1.5 leading-relaxed">
-                    Unlike traditional automated market makers (AMMs) or bonding curves that suffer from high slippage and front-running, Ferrule routes directly to Somnia DreamDEX live CLOB contracts.
+                    Unlike traditional automated market makers (AMMs) that require separate ERC-20 approval transactions, FerrArc utilizes Arc L1's native 18-decimal USDC with direct msg.value staking and automated Pyth oracle settlement.
                   </p>
                 </div>
 
                 {/* Architecture ASCII Flow */}
                 <div className="p-4 bg-bg-raised border border-border-base rounded-[4px] font-mono text-[11px] text-text-dim overflow-x-auto">
                   <div className="text-text-secondary font-bold mb-2 text-[10px] uppercase text-cyan-eval">
-                    // Deterministic Binary Pipeline (Somnia Shannon 50312)
+                    // Deterministic Binary Pipeline (Arc L1 Mainnet 5042)
                   </div>
                   <div className="whitespace-pre text-[10px] sm:text-[11px] leading-relaxed text-text-primary">
 {`+-----------------------+     +--------------------------+     +------------------------+
-|   Pyth Oracle Feeds   | --> | Rolling Window Contract  | --> | Somnia DreamDEX CLOB   |
-|   (Sub-second Price)  |     | (BTC/ETH: 5m, 1h, 24h)   |     | (Continuous Orderbook) |
+|   Pyth Oracle Feeds   | --> | Rolling Window Contract  | --> | Arc Pari-Mutuel Engine |
+|   (Sub-second Price)  |     | (BTC/ETH/EURC: 15m, 1h)  |     | (Native 18-dec USDC)   |
 +-----------------------+     +--------------------------+     +------------------------+
                                            |
                               +------------v-------------+
-                              |    45s Safety Gate       | --> Trading locks before expiry;
+                              |    45s Safety Gate       | --> Order intake locks before expiry;
                               | (Anti-MEV Front-running) |     Settles deterministically.
                               +--------------------------+`}
                   </div>
@@ -224,10 +224,10 @@ export function HowItWorksModal({
                   <div className="p-4 bg-bg-raised border border-border-base rounded-[4px]">
                     <div className="flex items-center gap-2 font-mono text-xs font-bold text-text-primary mb-2">
                       <Check size={14} className="text-up-green" />
-                      <span>Continuous Double Auction</span>
+                      <span>Zero-Approval Native Staking</span>
                     </div>
                     <p className="text-xs text-text-secondary leading-relaxed">
-                      Makers place limit bids and asks on binary outcomes. Takers cross the spread with deterministic fill pricing and zero slippage on matched depth.
+                      Stake native USDC directly via msg.value with zero allowance friction, saving gas and eliminating malicious approval vulnerabilities.
                     </p>
                   </div>
 
@@ -245,24 +245,20 @@ export function HowItWorksModal({
                 {/* On-Chain Contract Registry */}
                 <div className="p-4 bg-bg-raised border border-border-base rounded-[4px] font-mono text-xs">
                   <span className="text-[10px] text-text-dim uppercase tracking-wider block mb-2 font-bold">
-                    Canonical Verified Contracts (Somnia Shannon Testnet):
+                    Canonical Verified Contracts (Arc L1 Mainnet 5042):
                   </span>
                   <div className="space-y-1.5 text-[11px]">
                     <div className="flex flex-col sm:flex-row sm:items-between justify-between gap-1 py-1 border-b border-border-base/50">
-                      <span className="text-text-secondary">Binary Markets Module:</span>
-                      <span className="text-text-primary truncate font-mono text-[10px]">{CANONICAL_CONTRACTS.binaryMarketsModule}</span>
+                      <span className="text-text-secondary">FerrArc Event Engine:</span>
+                      <span className="text-text-primary truncate font-mono text-[10px]">{FERRARC_CONTRACTS.eventEngine}</span>
                     </div>
                     <div className="flex flex-col sm:flex-row sm:items-between justify-between gap-1 py-1 border-b border-border-base/50">
-                      <span className="text-text-secondary">DreamDEX Markets Core:</span>
-                      <span className="text-text-primary truncate font-mono text-[10px]">{CANONICAL_CONTRACTS.marketsCore}</span>
-                    </div>
-                    <div className="flex flex-col sm:flex-row sm:items-between justify-between gap-1 py-1 border-b border-border-base/50">
-                      <span className="text-text-secondary">Pyth OracleHub:</span>
-                      <span className="text-text-primary truncate font-mono text-[10px]">{CANONICAL_CONTRACTS.oracleHub}</span>
+                      <span className="text-text-secondary">StreamFlow Engine:</span>
+                      <span className="text-text-primary truncate font-mono text-[10px]">{FERRARC_CONTRACTS.streamEngine}</span>
                     </div>
                     <div className="flex flex-col sm:flex-row sm:items-between justify-between gap-1 py-1">
-                      <span className="text-text-secondary">Somnia Testnet USDC (tUSDC):</span>
-                      <span className="text-text-primary truncate font-mono text-[10px]">{CANONICAL_CONTRACTS.testUsdc}</span>
+                      <span className="text-text-secondary">Arc Native Gas / Settlement:</span>
+                      <span className="text-text-primary font-mono text-[10px]">Native USDC (18 decimals)</span>
                     </div>
                   </div>
                 </div>
@@ -302,7 +298,7 @@ export function HowItWorksModal({
                       <span>Background Watcher Daemons</span>
                     </div>
                     <p className="text-xs text-text-secondary leading-relaxed">
-                      Spawn autonomous evaluators that monitor live Somnia CLOB order books in the background. When conditions trigger, executable suggestion cards appear directly in your prompt.
+                      Spawn autonomous evaluators that monitor live Arc L1 event contracts in the background. When mispricings trigger, executable suggestion cards appear directly in your prompt.
                     </p>
                   </div>
                 </div>
@@ -461,7 +457,7 @@ export function HowItWorksModal({
                     <strong className="text-text-primary block font-mono text-[11px] mb-1">
                       100% Non-Custodial &amp; Deterministic
                     </strong>
-                    Switching to Real Mode executes orders directly against Somnia Shannon (50312) contracts using your Web3 wallet. Ferrule never holds your private keys, funds, or collateral.
+                    Switching to Real Mode executes orders directly against Arc L1 Mainnet (5042) contracts using your Web3 wallet. FerrArc never holds your private keys, funds, or collateral.
                   </div>
                 </div>
               </div>

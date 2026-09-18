@@ -1,9 +1,9 @@
 import React from "react";
 import { ConnectWalletButton } from "./ConnectWalletButton.js";
-import { HelpCircle, Zap, Bot, Waves, TrendingUp } from "lucide-react";
+import { HelpCircle, Bot, Waves, LayoutGrid, Terminal } from "lucide-react";
 import type { TradingMode } from "../../types/index.js";
 
-export type FerrArcNavTab = "trade" | "agent" | "stream";
+export type FerrArcNavTab = "markets" | "terminal" | "agent" | "stream";
 
 export interface HeaderProps {
   activeTab: FerrArcNavTab;
@@ -33,9 +33,9 @@ export function Header({
         {/* Brand Mark */}
         <button
           type="button"
-          onClick={() => onChangeTab("trade")}
+          onClick={() => onChangeTab("markets")}
           className="flex items-center gap-2 text-white hover:text-white transition-opacity cursor-pointer group"
-          title="FerrArc — Capital Markets on Arc L1"
+          title="FerrArc — Binary Markets on Arc L1"
         >
           <div className="w-2 h-2 rounded-full bg-[#00E5FF] shadow-[0_0_8px_#00E5FF] group-hover:scale-125 transition-transform"></div>
           <span className="font-mono text-[13px] font-bold tracking-wider text-white">
@@ -46,19 +46,32 @@ export function Header({
           </span>
         </button>
 
-        {/* 3 Calm Navigation Tabs */}
+        {/* Calm Navigation Tabs */}
         <nav className="flex items-center gap-1 font-mono text-xs">
           <button
             type="button"
-            onClick={() => onChangeTab("trade")}
+            onClick={() => onChangeTab("markets")}
             className={`px-3 py-1 rounded transition-all cursor-pointer flex items-center gap-1.5 ${
-              activeTab === "trade"
+              activeTab === "markets"
                 ? "bg-[#0D121D] text-[#00E5FF] font-bold border border-[#1E293B]"
                 : "text-[#64748B] hover:text-[#94A3B8]"
             }`}
           >
-            <TrendingUp size={13} />
-            <span>Trade</span>
+            <LayoutGrid size={13} />
+            <span>Markets</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onChangeTab("terminal")}
+            className={`px-3 py-1 rounded transition-all cursor-pointer flex items-center gap-1.5 ${
+              activeTab === "terminal"
+                ? "bg-[#0D121D] text-[#00E5FF] font-bold border border-[#1E293B]"
+                : "text-[#64748B] hover:text-[#94A3B8]"
+            }`}
+          >
+            <Terminal size={13} />
+            <span>Terminal</span>
           </button>
 
           <button

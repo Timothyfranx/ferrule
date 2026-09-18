@@ -4,8 +4,7 @@ import { WagmiProvider } from "wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RainbowKitProvider, darkTheme } from "@rainbow-me/rainbowkit";
 import "@rainbow-me/rainbowkit/styles.css";
-import { somniaShannon } from "@somnia-chain/markets-sdk/chains";
-import { wagmiConfig } from "./config/wagmi.js";
+import { wagmiConfig, arcMainnet } from "./config/wagmi.js";
 import App from "./App.js";
 import "./assets/styles/index.css";
 
@@ -18,13 +17,13 @@ if (rootElement) {
       <WagmiProvider config={wagmiConfig}>
         <QueryClientProvider client={queryClient}>
           <RainbowKitProvider
-            initialChain={somniaShannon}
+            initialChain={arcMainnet}
             theme={darkTheme({
-              accentColor: "#00e676",
-              accentColorForeground: "#0a0a0f",
-              borderRadius: "none",
+              accentColor: "#00E5FF",
+              accentColorForeground: "#080B10",
+              borderRadius: "medium",
               fontStack: "system",
-              overlayBlur: "none",
+              overlayBlur: "small",
             })}
           >
             <App />

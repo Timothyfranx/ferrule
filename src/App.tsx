@@ -14,7 +14,8 @@ import {
   Footer, 
   MobileBottomNav,
   HowItWorksModal,
-  MinimalTradeView,
+  PolymarketGridView,
+  TerminalEmulator,
   AgentGatewayView,
   StreamFlowView
 } from "./components/index.js";
@@ -29,7 +30,7 @@ import type {
 } from "./types/index.js";
 import { AlertTriangle, X } from "lucide-react";
 
-// Initial fallback windows for instant high-fidelity rendering
+// Default verified market windows on Arc L1
 const DEFAULT_WINDOWS: OpenWindow[] = [
   {
     marketId: "0xbtc15m0000000000000000000000000000000000000000000000000000000001",
@@ -41,62 +42,11 @@ const DEFAULT_WINDOWS: OpenWindow[] = [
     upLeanProbability: 0.62,
     upLeanPercent: 62,
     bestUpBid: 0.61,
-    bestUpAsk: 0.6425,
+    bestUpAsk: 0.63,
     bestDownBid: 0.36,
     bestDownAsk: 0.38,
     upBidVolume: 12500,
     upAskVolume: 8400,
-    status: "Trading",
-  },
-  {
-    marketId: "0xbtc5m00000000000000000000000000000000000000000000000000000000002",
-    poolAddress: "0x1111111111111111111111111111111111111112",
-    asset: "BTC",
-    intervalSec: 300,
-    expiry: Math.floor(Date.now() / 1000) + 210,
-    secondsRemaining: 210,
-    upLeanProbability: 0.58,
-    upLeanPercent: 58,
-    bestUpBid: 0.57,
-    bestUpAsk: 0.6425,
-    bestDownBid: 0.40,
-    bestDownAsk: 0.43,
-    upBidVolume: 8000,
-    upAskVolume: 7500,
-    status: "Trading",
-  },
-  {
-    marketId: "0xbtc1m00000000000000000000000000000000000000000000000000000000003",
-    poolAddress: "0x1111111111111111111111111111111111111113",
-    asset: "BTC",
-    intervalSec: 60,
-    expiry: Math.floor(Date.now() / 1000) + 48,
-    secondsRemaining: 48,
-    upLeanProbability: 0.51,
-    upLeanPercent: 51,
-    bestUpBid: 0.50,
-    bestUpAsk: 0.6425,
-    bestDownBid: 0.48,
-    bestDownAsk: 0.50,
-    upBidVolume: 4200,
-    upAskVolume: 3900,
-    status: "Trading",
-  },
-  {
-    marketId: "0xbtc1h00000000000000000000000000000000000000000000000000000000004",
-    poolAddress: "0x1111111111111111111111111111111111111114",
-    asset: "BTC",
-    intervalSec: 3600,
-    expiry: Math.floor(Date.now() / 1000) + 2400,
-    secondsRemaining: 2400,
-    upLeanProbability: 0.66,
-    upLeanPercent: 66,
-    bestUpBid: 0.65,
-    bestUpAsk: 0.6425,
-    bestDownBid: 0.32,
-    bestDownAsk: 0.35,
-    upBidVolume: 34000,
-    upAskVolume: 28000,
     status: "Trading",
   },
   {
@@ -106,10 +56,10 @@ const DEFAULT_WINDOWS: OpenWindow[] = [
     intervalSec: 900,
     expiry: Math.floor(Date.now() / 1000) + 580,
     secondsRemaining: 580,
-    upLeanProbability: 0.55,
-    upLeanPercent: 55,
-    bestUpBid: 0.54,
-    bestUpAsk: 0.0345, // normalized factor for ETH
+    upLeanProbability: 0.54,
+    upLeanPercent: 54,
+    bestUpBid: 0.53,
+    bestUpAsk: 0.55,
     bestDownBid: 0.44,
     bestDownAsk: 0.46,
     upBidVolume: 15000,
@@ -126,11 +76,62 @@ const DEFAULT_WINDOWS: OpenWindow[] = [
     upLeanProbability: 0.50,
     upLeanPercent: 50,
     bestUpBid: 0.49,
-    bestUpAsk: 0.00001085, // EURC peg
+    bestUpAsk: 0.51,
     bestDownBid: 0.49,
     bestDownAsk: 0.51,
     upBidVolume: 50000,
     upAskVolume: 48000,
+    status: "Trading",
+  },
+  {
+    marketId: "0xbtc1h00000000000000000000000000000000000000000000000000000000004",
+    poolAddress: "0x1111111111111111111111111111111111111114",
+    asset: "BTC",
+    intervalSec: 3600,
+    expiry: Math.floor(Date.now() / 1000) + 2400,
+    secondsRemaining: 2400,
+    upLeanProbability: 0.68,
+    upLeanPercent: 68,
+    bestUpBid: 0.67,
+    bestUpAsk: 0.69,
+    bestDownBid: 0.30,
+    bestDownAsk: 0.32,
+    upBidVolume: 34000,
+    upAskVolume: 28000,
+    status: "Trading",
+  },
+  {
+    marketId: "0xeth1h00000000000000000000000000000000000000000000000000000000007",
+    poolAddress: "0x2222222222222222222222222222222222222223",
+    asset: "ETH",
+    intervalSec: 3600,
+    expiry: Math.floor(Date.now() / 1000) + 2100,
+    secondsRemaining: 2100,
+    upLeanProbability: 0.59,
+    upLeanPercent: 59,
+    bestUpBid: 0.58,
+    bestUpAsk: 0.60,
+    bestDownBid: 0.39,
+    bestDownAsk: 0.41,
+    upBidVolume: 22000,
+    upAskVolume: 19500,
+    status: "Trading",
+  },
+  {
+    marketId: "0xbtc5m00000000000000000000000000000000000000000000000000000000002",
+    poolAddress: "0x1111111111111111111111111111111111111112",
+    asset: "BTC",
+    intervalSec: 300,
+    expiry: Math.floor(Date.now() / 1000) + 210,
+    secondsRemaining: 210,
+    upLeanProbability: 0.58,
+    upLeanPercent: 58,
+    bestUpBid: 0.57,
+    bestUpAsk: 0.59,
+    bestDownBid: 0.40,
+    bestDownAsk: 0.42,
+    upBidVolume: 8000,
+    upAskVolume: 7500,
     status: "Trading",
   },
 ];
@@ -140,20 +141,22 @@ export default function App() {
   const { data: walletClient } = useWalletClient();
 
   const [mode, setMode] = useState<TradingMode>("practice");
+  
+  // Default landing view: "markets" (Polymarket box grid)
   const [activeTab, setActiveTab] = useState<FerrArcNavTab>(() => {
     if (typeof window !== "undefined") {
       const hash = window.location.hash.replace("#", "").toLowerCase();
-      if (hash === "agent" || hash === "stream" || hash === "trade") {
+      if (hash === "agent" || hash === "stream" || hash === "terminal" || hash === "markets") {
         return hash as FerrArcNavTab;
       }
     }
-    return "trade";
+    return "markets";
   });
 
   useEffect(() => {
     function onHashChange() {
       const hash = window.location.hash.replace("#", "").toLowerCase();
-      if (hash === "agent" || hash === "stream" || hash === "trade") {
+      if (hash === "agent" || hash === "stream" || hash === "terminal" || hash === "markets") {
         setActiveTab(hash as FerrArcNavTab);
       }
     }
@@ -233,29 +236,6 @@ export default function App() {
     };
   }, [isConnected, address, marketDataService]);
 
-  // Live market sync
-  useEffect(() => {
-    let mounted = true;
-
-    async function fetchWindows() {
-      try {
-        const liveWindows = await marketDataService.getOpenWindows();
-        if (mounted && liveWindows && liveWindows.length > 0) {
-          setWindows(liveWindows);
-        }
-      } catch (err) {
-        console.warn("Market scan using fallback windows:", err);
-      }
-    }
-
-    fetchWindows();
-    const interval = setInterval(fetchWindows, 4000);
-    return () => {
-      mounted = false;
-      clearInterval(interval);
-    };
-  }, [marketDataService]);
-
   // Countdown timer tick
   useEffect(() => {
     const timer = setInterval(() => {
@@ -331,9 +311,20 @@ export default function App() {
     [mode, practiceService, realService]
   );
 
+  async function handleClaimWinnings(call: Call) {
+    if (call.mode === "real") {
+      await settlementService.redeemWinningCall(call);
+      setCalls([...calls]);
+    }
+  }
+
+  const scorecard: CalibrationScorecard = useMemo(() => {
+    return ScorecardService.computeScorecard(calls, mode);
+  }, [calls, mode]);
+
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#080B10] text-[#F8FAFC] select-none font-sans">
-      {/* 1. Header (Minimalist Tabs + Quiet Mode Toggle + Wallet) */}
+      {/* 1. Header (Markets, Terminal, Agent, Stream + Mode + Wallet) */}
       <Header
         activeTab={activeTab}
         onChangeTab={handleTabChange}
@@ -346,8 +337,9 @@ export default function App() {
 
       {/* 2. Main Focused Surface */}
       <main className="flex-1 flex flex-col overflow-hidden relative">
-        {activeTab === "trade" && (
-          <MinimalTradeView
+        {/* VIEW 1: POLYMARKET-STYLE BOX MARKETS (DEFAULT LANDING) */}
+        {activeTab === "markets" && (
+          <PolymarketGridView
             windows={windows}
             mode={mode}
             onPlaceCall={handlePlaceCall}
@@ -356,13 +348,39 @@ export default function App() {
               const btn = document.getElementById("connect-wallet-btn");
               if (btn) btn.click();
             }}
+            onOpenTerminalWithMarket={(_marketId) => handleTabChange("terminal")}
+            onOpenAgentWithMarket={(_marketId) => handleTabChange("agent")}
           />
         )}
 
+        {/* VIEW 2: PRO VT100 TERMINAL EMULATOR */}
+        {activeTab === "terminal" && (
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <TerminalEmulator
+              mode={mode}
+              setMode={setMode}
+              windows={windows}
+              calls={calls}
+              onCallsChange={setCalls}
+              practiceService={practiceService}
+              realService={realService}
+              watcherService={watcherService}
+              walletAddress={address}
+              onOpenTradeModal={(w, dir, stake = 25) => handlePlaceCall(w, dir, stake)}
+              onOpenHowItWorks={() => setShowHowItWorks(true)}
+              scorecard={scorecard}
+              bankroll={practiceService.getBankroll()}
+              onClaimWinnings={handleClaimWinnings}
+            />
+          </div>
+        )}
+
+        {/* VIEW 3: AUTONOMOUS AGENT RUNNER */}
         {activeTab === "agent" && (
           <AgentGatewayView windows={windows} />
         )}
 
+        {/* VIEW 4: STREAMFLOW PER-SECOND CASHFLOW */}
         {activeTab === "stream" && (
           <StreamFlowView
             walletConnected={isConnected}
@@ -390,8 +408,8 @@ export default function App() {
       <HowItWorksModal
         isOpen={showHowItWorks}
         onClose={() => setShowHowItWorks(false)}
-        onLaunchTerminal={() => handleTabChange("trade")}
-        onLaunchBasic={() => handleTabChange("trade")}
+        onLaunchTerminal={() => handleTabChange("terminal")}
+        onLaunchBasic={() => handleTabChange("markets")}
       />
 
       {/* Risk Transition Warning Modal */}

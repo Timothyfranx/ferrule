@@ -19,7 +19,7 @@ export function TerminalBuffer({ lines, mode, onExecuteSuggestion }: TerminalBuf
     <div className="flex-1 overflow-y-auto font-mono text-[13px] leading-[21px] flex flex-col justify-start pr-1 space-y-1">
       {/* System Initialization Banner */}
       <div className="text-text-dim text-[11px] mb-2 pb-2 border-b border-border-subtle select-none leading-relaxed">
-        <div className="text-text-primary font-bold">Ferrule Deterministic Shell [Somnia DreamDEX CLOB 50312]</div>
+        <div className="text-text-primary font-bold">FerrArc Deterministic Shell [Arc L1 Mainnet 5042]</div>
         <div>Type <span className="text-text-primary">"help"</span> for commands, <span className="text-text-primary">"markets"</span> for live windows, <span className="text-text-primary">"ls"</span> for files.</div>
       </div>
 
@@ -29,7 +29,7 @@ export function TerminalBuffer({ lines, mode, onExecuteSuggestion }: TerminalBuf
           return (
             <div key={line.id} className="flex items-center gap-2 mt-1.5 font-mono">
               <span className={isPractice ? "text-up-green font-bold shrink-0 text-[13px]" : "text-down-red font-bold shrink-0 text-[13px]"}>
-                {line.prefix ?? "ferrule/~ $"}
+                {line.prefix ?? "ferrarc/~ $"}
               </span>
               <span className="text-text-primary font-medium">{line.text}</span>
             </div>

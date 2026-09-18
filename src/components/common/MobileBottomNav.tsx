@@ -1,5 +1,5 @@
 import React from "react";
-import { TrendingUp, Bot, Waves, HelpCircle } from "lucide-react";
+import { LayoutGrid, Terminal, Bot, Waves, HelpCircle } from "lucide-react";
 import type { FerrArcNavTab } from "./Header.js";
 import type { TradingMode } from "../../types/index.js";
 
@@ -16,22 +16,36 @@ export function MobileBottomNav({
   onOpenHowItWorks,
 }: MobileBottomNavProps) {
   return (
-    <nav className="sm:hidden fixed bottom-0 left-0 right-0 h-14 bg-[#080B10] border-t border-[#1E293B] z-50 flex items-center justify-around font-mono text-[11px] select-none">
-      {/* 1. Trade */}
+    <nav className="sm:hidden fixed bottom-0 left-0 right-0 h-14 bg-[#080B10] border-t border-[#1E293B] z-50 flex items-center justify-around font-mono text-[10px] select-none">
+      {/* 1. Markets */}
       <button
         type="button"
-        onClick={() => onChangeTab("trade")}
+        onClick={() => onChangeTab("markets")}
         className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors ${
-          activeTab === "trade"
+          activeTab === "markets"
             ? "text-[#00E5FF] font-bold bg-[#0D121D] border-t-2 border-[#00E5FF]"
             : "text-[#64748B] hover:text-[#94A3B8]"
         }`}
       >
-        <TrendingUp size={18} />
-        <span>Trade</span>
+        <LayoutGrid size={16} />
+        <span>Markets</span>
       </button>
 
-      {/* 2. Agent */}
+      {/* 2. Terminal */}
+      <button
+        type="button"
+        onClick={() => onChangeTab("terminal")}
+        className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors ${
+          activeTab === "terminal"
+            ? "text-[#00E5FF] font-bold bg-[#0D121D] border-t-2 border-[#00E5FF]"
+            : "text-[#64748B] hover:text-[#94A3B8]"
+        }`}
+      >
+        <Terminal size={16} />
+        <span>Terminal</span>
+      </button>
+
+      {/* 3. Agent */}
       <button
         type="button"
         onClick={() => onChangeTab("agent")}
@@ -41,11 +55,11 @@ export function MobileBottomNav({
             : "text-[#64748B] hover:text-[#94A3B8]"
         }`}
       >
-        <Bot size={18} />
+        <Bot size={16} />
         <span>Agent</span>
       </button>
 
-      {/* 3. Stream */}
+      {/* 4. Stream */}
       <button
         type="button"
         onClick={() => onChangeTab("stream")}
@@ -55,21 +69,9 @@ export function MobileBottomNav({
             : "text-[#64748B] hover:text-[#94A3B8]"
         }`}
       >
-        <Waves size={18} />
+        <Waves size={16} />
         <span>Stream</span>
       </button>
-
-      {/* 4. Guide */}
-      {onOpenHowItWorks && (
-        <button
-          type="button"
-          onClick={onOpenHowItWorks}
-          className="flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors text-[#64748B] hover:text-[#94A3B8]"
-        >
-          <HelpCircle size={18} />
-          <span>Guide</span>
-        </button>
-      )}
     </nav>
   );
 }

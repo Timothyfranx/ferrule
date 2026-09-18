@@ -1,11 +1,14 @@
-import "@rainbow-me/rainbowkit/styles.css";
 import { getDefaultConfig } from "@rainbow-me/rainbowkit";
-import { defineChain, http } from "viem";
-import { somniaShannon } from "@somnia-chain/markets-sdk/chains";
+import { defineChain } from "viem";
 import { mainnet, sepolia } from "viem/chains";
-import { ARC_CHAIN_ID, ARC_RPC_URL, ARC_EXPLORER_URL, SOMNIA_RPC_URL } from "./constants.js";
+import { http } from "wagmi";
+import { ARC_CHAIN_ID, ARC_RPC_URL, ARC_EXPLORER_URL } from "./constants.js";
 
-// Arc Mainnet (Chain ID: 5042, Native USDC Gas)
+/**
+ * Arc L1 Mainnet Chain Configuration
+ * Chain ID: 5042
+ * Native Gas/Staking: USDC (18 decimals)
+ */
 export const arcMainnet = defineChain({
   id: ARC_CHAIN_ID,
   name: "Arc Mainnet",
@@ -18,6 +21,9 @@ export const arcMainnet = defineChain({
     default: {
       http: [ARC_RPC_URL],
     },
+    public: {
+      http: [ARC_RPC_URL],
+    },
   },
   blockExplorers: {
     default: {
@@ -25,7 +31,6 @@ export const arcMainnet = defineChain({
       url: ARC_EXPLORER_URL,
     },
   },
-  testnet: false,
 });
 
 // Standard 32-char hexadecimal project ID for WalletConnect v2 handshake
@@ -34,12 +39,11 @@ const WALLETCONNECT_PROJECT_ID =
   "3fbb6bba6f1de962d911bb5b5c9dba88";
 
 export const wagmiConfig = getDefaultConfig({
-  appName: "FerrArc — Capital Markets on Arc L1",
+  appName: "FerrArc — Binary Markets on Arc L1",
   projectId: WALLETCONNECT_PROJECT_ID,
-  chains: [arcMainnet, somniaShannon, mainnet, sepolia],
+  chains: [arcMainnet, mainnet, sepolia],
   transports: {
     [arcMainnet.id]: http(ARC_RPC_URL),
-    [somniaShannon.id]: http(SOMNIA_RPC_URL),
     [mainnet.id]: http(),
     [sepolia.id]: http(),
   },
