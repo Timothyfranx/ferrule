@@ -14,6 +14,7 @@ import {
   Footer, 
   MobileBottomNav,
   HowItWorksModal,
+  LandingScreen,
   PolymarketGridView,
   TerminalEmulator,
   AgentGatewayView,
@@ -142,21 +143,33 @@ export default function App() {
 
   const [mode, setMode] = useState<TradingMode>("practice");
   
-  // Default landing view: "markets" (Polymarket box grid)
+  // Default product landing page on /: "overview"
   const [activeTab, setActiveTab] = useState<FerrArcNavTab>(() => {
     if (typeof window !== "undefined") {
       const hash = window.location.hash.replace("#", "").toLowerCase();
-      if (hash === "agent" || hash === "stream" || hash === "terminal" || hash === "markets") {
+      if (
+        hash === "agent" || 
+        hash === "stream" || 
+        hash === "terminal" || 
+        hash === "markets" || 
+        hash === "overview"
+      ) {
         return hash as FerrArcNavTab;
       }
     }
-    return "markets";
+    return "overview";
   });
 
   useEffect(() => {
     function onHashChange() {
       const hash = window.location.hash.replace("#", "").toLowerCase();
-      if (hash === "agent" || hash === "stream" || hash === "terminal" || hash === "markets") {
+      if (
+        hash === "agent" || 
+        hash === "stream" || 
+        hash === "terminal" || 
+        hash === "markets" || 
+        hash === "overview"
+      ) {
         setActiveTab(hash as FerrArcNavTab);
       }
     }
@@ -324,7 +337,7 @@ export default function App() {
 
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#080B10] text-[#F8FAFC] select-none font-sans">
-      {/* 1. Header (Markets, Terminal, Agent, Stream + Mode + Wallet) */}
+      {/* 1. Header (Home, Markets, Terminal, Agent, Stream + Mode + Wallet) */}
       <Header
         activeTab={activeTab}
         onChangeTab={handleTabChange}
@@ -337,7 +350,24 @@ export default function App() {
 
       {/* 2. Main Focused Surface */}
       <main className="flex-1 flex flex-col overflow-hidden relative">
-        {/* VIEW 1: POLYMARKET-STYLE BOX MARKETS (DEFAULT LANDING) */}
+        {/* VIEW 0: REAL PRODUCT LANDING PAGE (DEFAULT ON LOAD) */}
+        {activeTab === "overview" && (
+          <LandingScreen
+            windows={windows}
+            onEnterTerminal={() => handleTabChange("terminal")}
+            onEnterMarkets={() => handleTabChange("markets")}
+            onEnterAgent={() => handleTabChange("agent")}
+            onEnterStream={() => handleTabChange("stream")}
+            onPlaceCall={handlePlaceCall}
+            mode={mode}
+            onToggleMode={handleToggleMode}
+            bankroll={practiceService.getBankroll()}
+            scorecard={scorecard}
+            onOpenHowItWorks={() => setShowHowItWorks(true)}
+          />
+        )}
+
+        {/* VIEW 1: POLYMARKET-STYLE BOX MARKETS */}
         {activeTab === "markets" && (
           <PolymarketGridView
             windows={windows}
