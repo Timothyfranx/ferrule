@@ -1,6 +1,6 @@
 import type { Address } from "viem";
 
-export type AssetSymbol = "BTC" | "ETH" | "SOL";
+export type AssetSymbol = "BTC" | "ETH" | "SOL" | "EURC";
 
 export type CadenceInterval = 60 | 300 | 900 | 3600 | 14400 | 86400;
 

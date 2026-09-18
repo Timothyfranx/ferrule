@@ -2,7 +2,62 @@ import React, { useState } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useAccount, useChainId, useSwitchChain } from "wagmi";
 import { Wallet, AlertTriangle, ChevronDown } from "lucide-react";
-import { SOMNIA_CHAIN_ID, SOMNIA_RPC_URL, SOMNIA_EXPLORER_URL } from "../../config/constants.js";
+import { 
+  ARC_CHAIN_ID, 
+  ARC_RPC_URL, 
+  ARC_EXPLORER_URL, 
+  SOMNIA_CHAIN_ID, 
+  SOMNIA_RPC_URL, 
+  SOMNIA_EXPLORER_URL 
+} from "../../config/constants.js";
+
+export async function addArcToWallet() {
+  if (typeof window === "undefined" || !(window as any).ethereum) {
+    alert("No Web3 wallet extension detected in your browser. Please install MetaMask, Rabby, or another browser wallet.");
+    return false;
+  }
+
+  const ethereum = (window as any).ethereum;
+  try {
+    await ethereum.request({
+      method: "wallet_switchEthereumChain",
+      params: [{ chainId: `0x${ARC_CHAIN_ID.toString(16)}` }],
+    });
+    return true;
+  } catch (switchError: any) {
+    const isUnrecognized = 
+      switchError?.code === 4902 || 
+      switchError?.data?.originalError?.code === 4902 ||
+      switchError?.message?.includes("Unrecognized chain ID") ||
+      switchError?.message?.includes("4902");
+
+    if (isUnrecognized) {
+      try {
+        await ethereum.request({
+          method: "wallet_addEthereumChain",
+          params: [
+            {
+              chainId: `0x${ARC_CHAIN_ID.toString(16)}`,
+              chainName: "Arc Mainnet",
+              nativeCurrency: {
+                name: "USDC",
+                symbol: "USDC",
+                decimals: 18,
+              },
+              rpcUrls: [ARC_RPC_URL],
+              blockExplorerUrls: [ARC_EXPLORER_URL],
+            },
+          ],
+        });
+        return true;
+      } catch (addError) {
+        console.error("Failed to add Arc Mainnet to wallet:", addError);
+        return false;
+      }
+    }
+    return false;
+  }
+}
 
 export async function addSomniaToWallet() {
   if (typeof window === "undefined" || !(window as any).ethereum) {
@@ -12,14 +67,12 @@ export async function addSomniaToWallet() {
 
   const ethereum = (window as any).ethereum;
   try {
-    // Try switching to Somnia first
     await ethereum.request({
       method: "wallet_switchEthereumChain",
       params: [{ chainId: `0x${SOMNIA_CHAIN_ID.toString(16)}` }],
     });
     return true;
   } catch (switchError: any) {
-    // Error 4902 or unrecognized chain indicates chain has not been added yet
     const isUnrecognized = 
       switchError?.code === 4902 || 
       switchError?.data?.originalError?.code === 4902 ||
@@ -50,7 +103,6 @@ export async function addSomniaToWallet() {
         return false;
       }
     }
-    console.error("Failed to switch to Somnia network:", switchError);
     return false;
   }
 }
@@ -65,13 +117,13 @@ export function ConnectWalletButton() {
     setIsSwitching(true);
     try {
       if (switchChainAsync) {
-        await switchChainAsync({ chainId: SOMNIA_CHAIN_ID });
+        await switchChainAsync({ chainId: ARC_CHAIN_ID });
       } else {
-        await addSomniaToWallet();
+        await addArcToWallet();
       }
     } catch (switchErr) {
       console.warn("Wagmi switchChain error, falling back to wallet RPC:", switchErr);
-      await addSomniaToWallet();
+      await addArcToWallet();
     } finally {
       setIsSwitching(false);
     }
@@ -131,14 +183,12 @@ export function ConnectWalletButton() {
           (currentChainId ? Number(currentChainId) : null) ??
           parsedEthChainId;
 
-        // Valid Somnia chain IDs (Shannon testnet 50312, or local/devnet 5031)
-        const isSomnia =
-          effectiveChainId === SOMNIA_CHAIN_ID ||
-          effectiveChainId === 5031 ||
-          parsedEthChainId === SOMNIA_CHAIN_ID;
+        const isArc = effectiveChainId === ARC_CHAIN_ID || parsedEthChainId === ARC_CHAIN_ID;
+        const isSomnia = effectiveChainId === SOMNIA_CHAIN_ID || parsedEthChainId === SOMNIA_CHAIN_ID;
+        const isSupportedNetwork = isArc || isSomnia;
 
-        // 2. CONNECTED BUT NOT ON SOMNIA SHANNON
-        if (!isSomnia) {
+        // 2. CONNECTED BUT ON WRONG NETWORK
+        if (!isSupportedNetwork) {
           return (
             <div className="flex items-center gap-1">
               <button
@@ -146,10 +196,10 @@ export function ConnectWalletButton() {
                 disabled={isSwitching}
                 type="button"
                 className="h-7 px-2 bg-down-red/15 text-down-red border border-down-red hover:bg-down-red/25 font-mono text-[10px] font-bold tracking-wider uppercase transition-colors flex items-center gap-1.5 cursor-pointer rounded-[3px]"
-                title="Your wallet is on the wrong network. Click to switch to Somnia Shannon (50312)."
+                title="Your wallet is on the wrong network. Click to switch to Arc Mainnet (5042)."
               >
                 <AlertTriangle size={11} />
-                <span>{isSwitching ? "Switching..." : "Switch Network"}</span>
+                <span>{isSwitching ? "Switching..." : "Switch to Arc"}</span>
               </button>
 
               <button
@@ -164,7 +214,7 @@ export function ConnectWalletButton() {
           );
         }
 
-        // 3. FULLY CONNECTED & ON SOMNIA SHANNON (50312)
+        // 3. FULLY CONNECTED (Arc or Somnia)
         return (
           <div className="flex items-center gap-1.5 font-mono">
             {/* Chain Pill */}
@@ -172,10 +222,12 @@ export function ConnectWalletButton() {
               onClick={openChainModal}
               type="button"
               className="h-7 px-2 bg-bg-base border border-border-base hover:border-border-interactive text-text-secondary hover:text-text-primary text-[10px] flex items-center gap-1.5 transition-colors cursor-pointer rounded-[3px]"
-              title="Connected to Somnia Shannon Testnet"
+              title={isArc ? "Connected to Arc Mainnet (5042)" : "Connected to Somnia Shannon (50312)"}
             >
-              <span className="w-1.5 h-1.5 bg-up-green rounded-full inline-block"></span>
-              <span className="text-text-secondary">Shannon</span>
+              <span className={`w-1.5 h-1.5 rounded-full inline-block ${isArc ? "bg-cyan-eval" : "bg-up-green"}`}></span>
+              <span className={isArc ? "text-cyan-eval font-bold" : "text-text-secondary"}>
+                {isArc ? "Arc Mainnet" : "Shannon"}
+              </span>
             </button>
 
             {/* Account Pill */}

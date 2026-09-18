@@ -111,10 +111,10 @@ export function HowItWorksModal({
           <div className="flex items-center gap-2.5 font-mono">
             <div className="w-2.5 h-2.5 bg-cyan-eval"></div>
             <span className="text-xs sm:text-sm font-bold tracking-wider text-text-primary uppercase">
-              FERRULE PROTOCOL GUIDE
+              FERRARC PROTOCOL GUIDE
             </span>
             <span className="hidden sm:inline-block text-[9px] font-mono text-cyan-eval bg-cyan-eval/10 border border-cyan-eval/30 px-1.5 py-0.5 rounded-[2px] tracking-wider uppercase">
-              SOMNIA SHANNON ({SOMNIA_CHAIN_ID})
+              ARC MAINNET (5042)
             </span>
           </div>
 

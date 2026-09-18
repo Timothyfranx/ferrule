@@ -10,22 +10,15 @@ import {
   WatcherService 
 } from "./services/index.js";
 import { 
-  ModeBanner, 
   Header, 
   Footer, 
-  LandingScreen,
-  ModeSelectorModal,
-  BasicMarketView,
-  BasicScorecard,
-  TerminalEmulator, 
-  MarketGrid, 
-  CallModal, 
-  CalibrationDashboard, 
-  PositionsTable,
-  StrategyLibrary,
   MobileBottomNav,
-  HowItWorksModal
+  HowItWorksModal,
+  MinimalTradeView,
+  AgentGatewayView,
+  StreamFlowView
 } from "./components/index.js";
+import type { FerrArcNavTab } from "./components/common/Header.js";
 import { CANONICAL_CONTRACTS } from "./config/constants.js";
 import type { 
   OpenWindow, 
@@ -36,26 +29,126 @@ import type {
 } from "./types/index.js";
 import { AlertTriangle, X } from "lucide-react";
 
-export type AppView = "landing" | "basic" | "terminal";
+// Initial fallback windows for instant high-fidelity rendering
+const DEFAULT_WINDOWS: OpenWindow[] = [
+  {
+    marketId: "0xbtc15m0000000000000000000000000000000000000000000000000000000001",
+    poolAddress: "0x1111111111111111111111111111111111111111",
+    asset: "BTC",
+    intervalSec: 900,
+    expiry: Math.floor(Date.now() / 1000) + 640,
+    secondsRemaining: 640,
+    upLeanProbability: 0.62,
+    upLeanPercent: 62,
+    bestUpBid: 0.61,
+    bestUpAsk: 0.6425,
+    bestDownBid: 0.36,
+    bestDownAsk: 0.38,
+    upBidVolume: 12500,
+    upAskVolume: 8400,
+    status: "Trading",
+  },
+  {
+    marketId: "0xbtc5m00000000000000000000000000000000000000000000000000000000002",
+    poolAddress: "0x1111111111111111111111111111111111111112",
+    asset: "BTC",
+    intervalSec: 300,
+    expiry: Math.floor(Date.now() / 1000) + 210,
+    secondsRemaining: 210,
+    upLeanProbability: 0.58,
+    upLeanPercent: 58,
+    bestUpBid: 0.57,
+    bestUpAsk: 0.6425,
+    bestDownBid: 0.40,
+    bestDownAsk: 0.43,
+    upBidVolume: 8000,
+    upAskVolume: 7500,
+    status: "Trading",
+  },
+  {
+    marketId: "0xbtc1m00000000000000000000000000000000000000000000000000000000003",
+    poolAddress: "0x1111111111111111111111111111111111111113",
+    asset: "BTC",
+    intervalSec: 60,
+    expiry: Math.floor(Date.now() / 1000) + 48,
+    secondsRemaining: 48,
+    upLeanProbability: 0.51,
+    upLeanPercent: 51,
+    bestUpBid: 0.50,
+    bestUpAsk: 0.6425,
+    bestDownBid: 0.48,
+    bestDownAsk: 0.50,
+    upBidVolume: 4200,
+    upAskVolume: 3900,
+    status: "Trading",
+  },
+  {
+    marketId: "0xbtc1h00000000000000000000000000000000000000000000000000000000004",
+    poolAddress: "0x1111111111111111111111111111111111111114",
+    asset: "BTC",
+    intervalSec: 3600,
+    expiry: Math.floor(Date.now() / 1000) + 2400,
+    secondsRemaining: 2400,
+    upLeanProbability: 0.66,
+    upLeanPercent: 66,
+    bestUpBid: 0.65,
+    bestUpAsk: 0.6425,
+    bestDownBid: 0.32,
+    bestDownAsk: 0.35,
+    upBidVolume: 34000,
+    upAskVolume: 28000,
+    status: "Trading",
+  },
+  {
+    marketId: "0xeth15m0000000000000000000000000000000000000000000000000000000005",
+    poolAddress: "0x2222222222222222222222222222222222222222",
+    asset: "ETH",
+    intervalSec: 900,
+    expiry: Math.floor(Date.now() / 1000) + 580,
+    secondsRemaining: 580,
+    upLeanProbability: 0.55,
+    upLeanPercent: 55,
+    bestUpBid: 0.54,
+    bestUpAsk: 0.0345, // normalized factor for ETH
+    bestDownBid: 0.44,
+    bestDownAsk: 0.46,
+    upBidVolume: 15000,
+    upAskVolume: 12000,
+    status: "Trading",
+  },
+  {
+    marketId: "0xeurc15m000000000000000000000000000000000000000000000000000000006",
+    poolAddress: "0x3333333333333333333333333333333333333333",
+    asset: "EURC",
+    intervalSec: 900,
+    expiry: Math.floor(Date.now() / 1000) + 720,
+    secondsRemaining: 720,
+    upLeanProbability: 0.50,
+    upLeanPercent: 50,
+    bestUpBid: 0.49,
+    bestUpAsk: 0.00001085, // EURC peg
+    bestDownBid: 0.49,
+    bestDownAsk: 0.51,
+    upBidVolume: 50000,
+    upAskVolume: 48000,
+    status: "Trading",
+  },
+];
 
 export default function App() {
   const { address, isConnected } = useAccount();
   const { data: walletClient } = useWalletClient();
 
   const [mode, setMode] = useState<TradingMode>("practice");
-  const [currentView, setCurrentView] = useState<AppView>("landing");
-  const [basicTab, setBasicTab] = useState<"markets" | "scorecard" | "positions">("markets");
-  const [terminalTab, setTerminalTab] = useState<"terminal" | "markets" | "strategy" | "scorecard" | "positions">("terminal");
-  const [showModeSelector, setShowModeSelector] = useState(false);
+  const [activeTab, setActiveTab] = useState<FerrArcNavTab>("trade");
   const [showHowItWorks, setShowHowItWorks] = useState(false);
+  const [showTransitionModal, setShowTransitionModal] = useState(false);
 
-  const [windows, setWindows] = useState<OpenWindow[]>([]);
+  const [windows, setWindows] = useState<OpenWindow[]>(DEFAULT_WINDOWS);
   const [calls, setCalls] = useState<Call[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [bufferLineCount, setBufferLineCount] = useState(2);
   const [realUsdcBalance, setRealUsdcBalance] = useState("0.00");
 
-  // Singletons
+  // Core singletons
   const marketDataService = useMemo(() => new MarketDataService(), []);
   const practiceService = useMemo(() => new PracticeTradingService(), []);
   const watcherService = useMemo(() => new WatcherService(), []);
@@ -76,15 +169,6 @@ export default function App() {
   const settlementService = useMemo(() => {
     return new SettlementService(marketDataService.client, { trader: realService?.trader });
   }, [marketDataService, realService]);
-
-  // Modal states
-  const [tradeModal, setTradeModal] = useState<{
-    window: OpenWindow;
-    direction: CallDirection;
-    stake: number;
-  } | null>(null);
-
-  const [showTransitionModal, setShowTransitionModal] = useState(false);
 
   // Load initial calls from practice service
   useEffect(() => {
@@ -122,19 +206,18 @@ export default function App() {
     };
   }, [isConnected, address, marketDataService]);
 
-  // Fetch live market data from Somnia testnet
+  // Live market sync
   useEffect(() => {
     let mounted = true;
 
     async function fetchWindows() {
       try {
         const liveWindows = await marketDataService.getOpenWindows();
-        if (mounted) {
+        if (mounted && liveWindows && liveWindows.length > 0) {
           setWindows(liveWindows);
-          setLoading(false);
         }
       } catch (err) {
-        console.error("Market scan error:", err);
+        console.warn("Market scan using fallback windows:", err);
       }
     }
 
@@ -159,7 +242,7 @@ export default function App() {
     return () => clearInterval(timer);
   }, []);
 
-  // Settlement watcher against on-chain truth
+  // Settlement watcher
   useEffect(() => {
     const interval = setInterval(async () => {
       const pendingCalls = calls.filter((c) => c.settlementStatus === "pending");
@@ -178,7 +261,7 @@ export default function App() {
             updated = true;
           }
         } catch {
-          // Market still resolving
+          // Market still pending resolution
         }
       }
 
@@ -189,13 +272,6 @@ export default function App() {
 
     return () => clearInterval(interval);
   }, [calls, marketDataService, practiceService, settlementService]);
-
-  // Feed live windows to background strategy watcher service
-  useEffect(() => {
-    if (windows.length > 0) {
-      watcherService.evaluateTick(windows, mode);
-    }
-  }, [windows, watcherService, mode]);
 
   // Mode switch handler with risk warning
   function handleToggleMode() {
@@ -211,292 +287,127 @@ export default function App() {
     setShowTransitionModal(false);
   }
 
-  const handleOpenTradeModal = useCallback((w: OpenWindow, direction: CallDirection, stake = 25) => {
-    setTradeModal({ window: w, direction, stake });
-  }, []);
-
-  async function handleConfirmTrade(stake: number) {
-    if (!tradeModal) return;
-    const { window: w, direction } = tradeModal;
-
-    if (mode === "practice") {
-      practiceService.placeCall(w, direction, stake);
-      setCalls(practiceService.getCalls());
-    } else {
-      if (!realService) {
-        throw new Error("Please connect your Web3 wallet on Somnia Shannon Testnet.");
+  // Direct 1-click trade placement
+  const handlePlaceCall = useCallback(
+    async (w: OpenWindow, direction: CallDirection, stake: number) => {
+      if (mode === "practice") {
+        practiceService.placeCall(w, direction, stake);
+        setCalls(practiceService.getCalls());
+      } else {
+        if (!realService) {
+          throw new Error("Please connect your Web3 wallet on Arc Mainnet.");
+        }
+        const newCall = await realService.placeCall(w, direction, stake);
+        setCalls((prev) => [newCall, ...prev]);
       }
-      const newCall = await realService.placeCall(w, direction, stake);
-      setCalls((prev) => [newCall, ...prev]);
-    }
-  }
-
-  async function handleClaimWinnings(call: Call) {
-    if (call.mode === "real") {
-      await settlementService.redeemWinningCall(call);
-      setCalls([...calls]);
-    }
-  }
-
-  const handleEnterBasic = useCallback(() => {
-    setCurrentView("basic");
-    setBasicTab("markets");
-  }, []);
-
-  const handleEnterPro = useCallback(() => {
-    setCurrentView("terminal");
-    setTerminalTab("terminal");
-  }, []);
-
-  const scorecard: CalibrationScorecard = ScorecardService.computeScorecard(calls, mode);
-  const activeRound = windows.length > 0 ? windows[0].marketId.slice(0, 8) : undefined;
-  const positionsCount = calls.filter((c) => c.mode === mode).length;
+    },
+    [mode, practiceService, realService]
+  );
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-bg-base text-text-primary select-none">
-      {/* 1. Header (Experience Switcher + Subtabs + Telemetry) */}
+    <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#080B10] text-[#F8FAFC] select-none font-sans">
+      {/* 1. Header (Minimalist Tabs + Quiet Mode Toggle + Wallet) */}
       <Header
-        currentView={currentView}
-        onChangeView={setCurrentView}
-        basicTab={basicTab}
-        onChangeBasicTab={setBasicTab}
-        terminalTab={terminalTab}
-        onChangeTerminalTab={setTerminalTab}
+        activeTab={activeTab}
+        onChangeTab={setActiveTab}
         mode={mode}
         onToggleMode={handleToggleMode}
         bankroll={practiceService.getBankroll()}
         realBalance={realUsdcBalance}
-        bufferLineCount={bufferLineCount}
-        activeWatchersCount={watcherService.getWatchers().length}
-        openWindowsCount={windows.length}
-        positionsCount={positionsCount}
         onOpenHowItWorks={() => setShowHowItWorks(true)}
       />
 
-      {/* 2. Sticky Mode Banner (Unmissable Solid Fill) */}
-      <ModeBanner
-        mode={mode}
-        onToggleMode={handleToggleMode}
-        bankroll={practiceService.getBankroll()}
-        realBalance={realUsdcBalance}
-        activeRound={activeRound}
-        currentView={currentView}
-        onSwitchView={setCurrentView}
-      />
-
-      {/* 3. Main Multi-Pane Content */}
-      <div className="flex-1 flex flex-col overflow-hidden relative">
-        {/* VIEW A: LANDING SCREEN */}
-        {currentView === "landing" && (
-          <LandingScreen
+      {/* 2. Main Focused Surface */}
+      <main className="flex-1 flex flex-col overflow-hidden relative">
+        {activeTab === "trade" && (
+          <MinimalTradeView
             windows={windows}
-            onEnterBasic={handleEnterBasic}
-            onEnterPro={handleEnterPro}
-            onOpenModeSelector={() => setShowModeSelector(true)}
             mode={mode}
-            onToggleMode={handleToggleMode}
-            bankroll={practiceService.getBankroll()}
-            scorecard={scorecard}
-            onOpenHowItWorks={() => setShowHowItWorks(true)}
+            onPlaceCall={handlePlaceCall}
+            walletConnected={isConnected}
+            onConnectWallet={() => {
+              const btn = document.getElementById("connect-wallet-btn");
+              if (btn) btn.click();
+            }}
           />
         )}
 
-        {/* VIEW B: BASIC TRADING SURFACE */}
-        {currentView === "basic" && (
-          <div className="flex-1 flex flex-col overflow-hidden">
-            {basicTab === "markets" && (
-              <BasicMarketView
-                windows={windows}
-                onSelectCall={handleOpenTradeModal}
-                onSwitchToPro={handleEnterPro}
-                recentCalls={calls.filter((c) => c.mode === mode)}
-                loading={loading}
-                mode={mode}
-                onOpenHowItWorks={() => setShowHowItWorks(true)}
-              />
-            )}
-
-            {basicTab === "scorecard" && (
-              <BasicScorecard
-                scorecard={scorecard}
-                mode={mode}
-                onSwitchToPro={handleEnterPro}
-              />
-            )}
-
-            {basicTab === "positions" && (
-              <div className="flex-1 overflow-y-auto">
-                <PositionsTable
-                  calls={calls}
-                  mode={mode}
-                  onClaimWinnings={handleClaimWinnings}
-                />
-              </div>
-            )}
-          </div>
+        {activeTab === "agent" && (
+          <AgentGatewayView windows={windows} />
         )}
 
-        {/* VIEW C: PRO TERMINAL SHELL */}
-        {currentView === "terminal" && (
-          <div className="flex-1 flex flex-col overflow-hidden">
-            {terminalTab === "terminal" && (
-              <TerminalEmulator
-                mode={mode}
-                setMode={setMode}
-                windows={windows}
-                calls={calls}
-                onCallsChange={setCalls}
-                practiceService={practiceService}
-                realService={realService}
-                watcherService={watcherService}
-                walletAddress={address}
-                onOpenTradeModal={handleOpenTradeModal}
-                onLineCountChange={setBufferLineCount}
-                onOpenHowItWorks={() => setShowHowItWorks(true)}
-                scorecard={scorecard}
-                bankroll={practiceService.getBankroll()}
-                onClaimWinnings={handleClaimWinnings}
-              />
-            )}
-
-            {terminalTab === "markets" && (
-              <div className="flex-1 overflow-y-auto">
-                <MarketGrid
-                  windows={windows}
-                  onSelectCall={handleOpenTradeModal}
-                  loading={loading}
-                />
-              </div>
-            )}
-
-            {terminalTab === "strategy" && (
-              <StrategyLibrary
-                mode={mode}
-                windows={windows}
-                bankroll={practiceService.getBankroll()}
-                realBalance={realUsdcBalance}
-                onOpenTerminalWithCommand={(_cmd) => {
-                  setTerminalTab("terminal");
-                }}
-              />
-            )}
-
-            {terminalTab === "scorecard" && (
-              <div className="flex-1 overflow-y-auto">
-                <CalibrationDashboard
-                  scorecard={scorecard}
-                  mode={mode}
-                />
-              </div>
-            )}
-
-            {terminalTab === "positions" && (
-              <div className="flex-1 overflow-y-auto">
-                <PositionsTable
-                  calls={calls}
-                  mode={mode}
-                  onClaimWinnings={handleClaimWinnings}
-                />
-              </div>
-            )}
-          </div>
+        {activeTab === "stream" && (
+          <StreamFlowView
+            walletConnected={isConnected}
+            onConnectWallet={() => {
+              const btn = document.getElementById("connect-wallet-btn");
+              if (btn) btn.click();
+            }}
+          />
         )}
-      </div>
+      </main>
 
-      {/* 4. Footer (VS Code Status Strip - hidden on mobile in favor of bottom nav) */}
+      {/* 3. Sleek Footer (Desktop Status Strip) */}
       <div className="hidden sm:block">
         <Footer mode={mode} accountAddress={address} />
       </div>
 
-      {/* 5. Mobile Bottom Navigation Bar (Stitch Ref v3 Mobile Cockpit) */}
+      {/* 4. Mobile Bottom Navigation Bar */}
       <MobileBottomNav
-        currentView={currentView}
-        onChangeView={setCurrentView}
-        basicTab={basicTab}
-        onChangeBasicTab={setBasicTab}
-        terminalTab={terminalTab}
-        onChangeTerminalTab={setTerminalTab}
-        mode={mode}
-        positionsCount={positionsCount}
+        activeTab={activeTab}
+        onChangeTab={setActiveTab}
+        onOpenHowItWorks={() => setShowHowItWorks(true)}
       />
 
-      {/* Trade Review & Confirmation Modal */}
-      {tradeModal && (
-        <CallModal
-          window={tradeModal.window}
-          direction={tradeModal.direction}
-          mode={mode}
-          initialStake={tradeModal.stake}
-          walletConnected={isConnected}
-          onClose={() => setTradeModal(null)}
-          onConfirm={handleConfirmTrade}
-        />
-      )}
-
-      {/* Mode Selector Modal */}
-      <ModeSelectorModal
-        isOpen={showModeSelector}
-        onClose={() => setShowModeSelector(false)}
-        onSelectMode={(selected) => {
-          if (selected === "basic") {
-            handleEnterBasic();
-          } else {
-            handleEnterPro();
-          }
-          setShowModeSelector(false);
-        }}
-        currentMode={currentView === "terminal" ? "terminal" : "basic"}
-      />
-
-      {/* How It Works Architecture & Protocol Guide Modal */}
+      {/* How It Works Architecture Guide Modal */}
       <HowItWorksModal
         isOpen={showHowItWorks}
         onClose={() => setShowHowItWorks(false)}
-        onLaunchTerminal={handleEnterPro}
-        onLaunchBasic={handleEnterBasic}
+        onLaunchTerminal={() => setActiveTab("trade")}
+        onLaunchBasic={() => setActiveTab("trade")}
       />
 
       {/* Risk Transition Warning Modal */}
       {showTransitionModal && (
-        <div className="fixed inset-0 z-50 bg-[#0a0a0f]/80 flex items-center justify-center p-4">
-          <div className="bg-bg-raised border border-border-interactive w-full max-w-lg p-5 font-mono text-[13px]">
-            <div className="flex items-center justify-between pb-3 border-b border-border-subtle">
-              <div className="flex items-center gap-2 text-down-red font-bold text-[14px]">
+        <div className="fixed inset-0 z-50 bg-[#080B10]/80 backdrop-blur-xs flex items-center justify-center p-4 font-mono text-[13px]">
+          <div className="bg-[#0D121D] border border-[#1E293B] w-full max-w-lg p-5 rounded-lg shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-[#1E293B]">
+              <div className="flex items-center gap-2 text-[#EF4444] font-bold text-[14px]">
                 <AlertTriangle size={18} />
-                <span>TRANSITION TO REAL TRADING</span>
+                <span>TRANSITION TO REAL CAPITAL (ARC L1)</span>
               </div>
               <button
                 onClick={() => setShowTransitionModal(false)}
-                className="text-text-dim hover:text-text-primary cursor-pointer"
+                className="text-[#64748B] hover:text-white cursor-pointer"
               >
                 <X size={16} />
               </button>
             </div>
 
-            <div className="my-4 space-y-3 text-text-secondary text-[12px] leading-[18px]">
-              <p className="text-text-primary font-bold">
-                You have practiced the mechanics, not mastered risk psychology.
+            <div className="my-4 space-y-3 text-[#94A3B8] text-[12px] leading-[18px]">
+              <p className="text-white font-bold">
+                You are switching to Real Mainnet Trading on Arc.
               </p>
               <p>
-                Paper trading is well-documented not to transfer the emotional reality of real capital risk. In Real Mode:
+                In Real Mode, binary event contracts execute against real native USDC balances directly through your connected Web3 wallet:
               </p>
-              <ul className="list-disc pl-5 space-y-1 text-text-dim">
+              <ul className="list-disc pl-5 space-y-1 text-[#64748B]">
                 <li>Every order signs directly through your connected Web3 wallet.</li>
-                <li>There are no delegated session keys — you control 100% of transactions.</li>
-                <li>Winnings redemption is an explicit action to protect you from gas burns on lost calls.</li>
+                <li>There are zero delegated session keys — you control 100% of your funds.</li>
+                <li>Zero mock data: settlements evaluate against verifiable oracle prices.</li>
               </ul>
             </div>
 
-            <div className="flex gap-2 pt-2 border-t border-border-subtle">
+            <div className="flex gap-2 pt-2 border-t border-[#1E293B]">
               <button
                 onClick={() => setShowTransitionModal(false)}
-                className="flex-1 py-2 bg-bg-base border border-border-base text-text-primary hover:border-border-interactive cursor-pointer font-bold"
+                className="flex-1 py-2 bg-[#080B10] border border-[#1E293B] text-white hover:border-[#00E5FF] cursor-pointer font-bold rounded"
               >
                 Keep Practicing
               </button>
               <button
                 onClick={confirmSwitchToReal}
-                className="flex-1 py-2 bg-down-red text-[#0a0a0f] hover:bg-down-red/90 cursor-pointer font-bold"
+                className="flex-1 py-2 bg-[#EF4444] text-[#080B10] hover:bg-[#EF4444]/90 cursor-pointer font-bold rounded"
               >
                 I Understand, Continue →
               </button>

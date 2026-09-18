@@ -1,126 +1,75 @@
 import React from "react";
-import { Home, Layers, Terminal, Sliders, BarChart3, Clock } from "lucide-react";
-import type { AppView, BasicTab, TerminalTab } from "./Header.js";
+import { TrendingUp, Bot, Waves, HelpCircle } from "lucide-react";
+import type { FerrArcNavTab } from "./Header.js";
 import type { TradingMode } from "../../types/index.js";
 
 interface MobileBottomNavProps {
-  currentView: AppView;
-  onChangeView: (view: AppView) => void;
-  basicTab: BasicTab;
-  onChangeBasicTab: (tab: BasicTab) => void;
-  terminalTab: TerminalTab;
-  onChangeTerminalTab: (tab: TerminalTab) => void;
-  mode: TradingMode;
-  positionsCount: number;
+  activeTab: FerrArcNavTab;
+  onChangeTab: (tab: FerrArcNavTab) => void;
+  mode?: TradingMode;
+  onOpenHowItWorks?: () => void;
 }
 
 export function MobileBottomNav({
-  currentView,
-  onChangeView,
-  basicTab,
-  onChangeBasicTab,
-  terminalTab,
-  onChangeTerminalTab,
-  mode,
-  positionsCount,
+  activeTab,
+  onChangeTab,
+  onOpenHowItWorks,
 }: MobileBottomNavProps) {
-  const isPractice = mode === "practice";
-
   return (
-    <nav className="sm:hidden fixed bottom-0 left-0 right-0 h-14 bg-bg-raised border-t border-border-base z-50 flex items-center justify-around font-mono text-[10px] select-none">
-      {/* 1. Pro Terminal */}
+    <nav className="sm:hidden fixed bottom-0 left-0 right-0 h-14 bg-[#080B10] border-t border-[#1E293B] z-50 flex items-center justify-around font-mono text-[11px] select-none">
+      {/* 1. Trade */}
       <button
-        onClick={() => {
-          onChangeView("terminal");
-          onChangeTerminalTab("terminal");
-        }}
+        type="button"
+        onClick={() => onChangeTab("trade")}
         className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors ${
-          currentView === "terminal" && terminalTab === "terminal"
-            ? "text-cyan-eval font-bold bg-bg-base border-t-2 border-cyan-eval"
-            : "text-text-dim hover:text-text-secondary"
+          activeTab === "trade"
+            ? "text-[#00E5FF] font-bold bg-[#0D121D] border-t-2 border-[#00E5FF]"
+            : "text-[#64748B] hover:text-[#94A3B8]"
         }`}
       >
-        <Terminal size={17} />
-        <span>Terminal</span>
+        <TrendingUp size={18} />
+        <span>Trade</span>
       </button>
 
-      {/* 2. Markets */}
+      {/* 2. Agent */}
       <button
-        onClick={() => {
-          if (currentView === "basic") {
-            onChangeBasicTab("markets");
-          } else {
-            onChangeView("terminal");
-            onChangeTerminalTab("markets");
-          }
-        }}
+        type="button"
+        onClick={() => onChangeTab("agent")}
         className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors ${
-          (currentView === "terminal" && terminalTab === "markets") ||
-          (currentView === "basic" && basicTab === "markets")
-            ? "text-cyan-eval font-bold bg-bg-base border-t-2 border-cyan-eval"
-            : "text-text-dim hover:text-text-secondary"
+          activeTab === "agent"
+            ? "text-[#00E5FF] font-bold bg-[#0D121D] border-t-2 border-[#00E5FF]"
+            : "text-[#64748B] hover:text-[#94A3B8]"
         }`}
       >
-        <Layers size={17} />
-        <span>Markets</span>
+        <Bot size={18} />
+        <span>Agent</span>
       </button>
 
-      {/* 3. Strategy Library */}
+      {/* 3. Stream */}
       <button
-        onClick={() => {
-          onChangeView("terminal");
-          onChangeTerminalTab("strategy");
-        }}
+        type="button"
+        onClick={() => onChangeTab("stream")}
         className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors ${
-          currentView === "terminal" && terminalTab === "strategy"
-            ? "text-cyan-eval font-bold bg-bg-base border-t-2 border-cyan-eval"
-            : "text-text-dim hover:text-text-secondary"
+          activeTab === "stream"
+            ? "text-[#00E5FF] font-bold bg-[#0D121D] border-t-2 border-[#00E5FF]"
+            : "text-[#64748B] hover:text-[#94A3B8]"
         }`}
       >
-        <Sliders size={17} />
-        <span>Strategies</span>
+        <Waves size={18} />
+        <span>Stream</span>
       </button>
 
-      {/* 4. Positions */}
-      <button
-        onClick={() => {
-          if (currentView === "basic") {
-            onChangeBasicTab("positions");
-          } else {
-            onChangeView("terminal");
-            onChangeTerminalTab("positions");
-          }
-        }}
-        className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors relative ${
-          (currentView === "basic" && basicTab === "positions") ||
-          (currentView === "terminal" && terminalTab === "positions")
-            ? "text-cyan-eval font-bold bg-bg-base border-t-2 border-cyan-eval"
-            : "text-text-dim hover:text-text-secondary"
-        }`}
-      >
-        <div className="relative">
-          <Clock size={17} />
-          {positionsCount > 0 && (
-            <span className="absolute -top-1 -right-2 w-3.5 h-3.5 bg-cyan-eval text-[#0a0a0f] text-[9px] font-bold rounded-full flex items-center justify-center leading-none">
-              {positionsCount}
-            </span>
-          )}
-        </div>
-        <span>Positions</span>
-      </button>
-
-      {/* 5. Overview / Landing */}
-      <button
-        onClick={() => onChangeView("landing")}
-        className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors ${
-          currentView === "landing"
-            ? "text-text-primary font-bold bg-bg-base border-t-2 border-border-interactive"
-            : "text-text-dim hover:text-text-secondary"
-        }`}
-      >
-        <Home size={17} />
-        <span>Overview</span>
-      </button>
+      {/* 4. Guide */}
+      {onOpenHowItWorks && (
+        <button
+          type="button"
+          onClick={onOpenHowItWorks}
+          className="flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors text-[#64748B] hover:text-[#94A3B8]"
+        >
+          <HelpCircle size={18} />
+          <span>Guide</span>
+        </button>
+      )}
     </nav>
   );
 }

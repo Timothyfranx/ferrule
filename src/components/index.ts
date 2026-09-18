@@ -23,3 +23,6 @@ export * from "./cockpit/RolloverEngine.js";
 export * from "./cockpit/OrderflowCockpit.js";
 export * from "./cockpit/TelemetryDrawer.js";
 export * from "./cockpit/AuditModal.js";
+export * from "./ferrarc/MinimalTradeView.js";
+export * from "./ferrarc/AgentGatewayView.js";
+export * from "./ferrarc/StreamFlowView.js";

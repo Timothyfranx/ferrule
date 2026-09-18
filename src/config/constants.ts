@@ -1,8 +1,21 @@
 import { SOMNIA_TESTNET_ADDRESSES } from "@somnia-chain/markets-sdk";
 import type { Address } from "viem";
 
-export const SOMNIA_CHAIN_ID = 50312;
+// --- ARC MAINNET CONSTANTS (CHAIN ID: 5042) ---
+export const ARC_CHAIN_ID = 5042;
+export const ARC_RPC_URL = "https://rpc.mainnet.arc.io";
+export const ARC_EXPLORER_URL = "https://explorer.arc.io";
+export const ARC_SYSTEM_EMITTER = "0xffffFFFfFFffffffffffffffFfFFFfffFFFfFFfE" as Address;
+export const ARC_ERC20_USDC = "0x3600000000000000000000000000000000000000" as Address;
 
+// FerrArc Canonical Contracts on Arc Mainnet
+export const FERRARC_CONTRACTS = {
+  eventEngine: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e" as Address,
+  streamEngine: "0x53d284357ec70cE289D6D64134DfAc8E511c8a3D" as Address,
+};
+
+// --- SOMNIA CONSTANTS (Preserved for compatibility) ---
+export const SOMNIA_CHAIN_ID = 50312;
 export const SOMNIA_RPC_URL = "https://api.infra.testnet.somnia.network";
 export const SOMNIA_WS_RPC_URL = "wss://api.infra.testnet.somnia.network/ws";
 export const SOMNIA_INDEXER_URL = "https://dev.smk.somnia.host/v1/graphql";
@@ -30,5 +43,5 @@ export const PROTOCOL_LIMITS = {
   maxLogBufferSize: 2000,
 };
 
-export const TRACKED_ASSETS = ["BTC", "ETH"] as const;
+export const TRACKED_ASSETS = ["BTC", "ETH", "EURC"] as const;
 export const TRACKED_CADENCES = [60, 300, 900, 3600, 14400, 86400] as const;
