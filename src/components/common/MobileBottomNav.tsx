@@ -1,5 +1,5 @@
 import React from "react";
-import { LayoutGrid, Terminal, Bot, Waves, Home } from "lucide-react";
+import { LayoutGrid, Terminal, Waves, Home } from "lucide-react";
 import type { FerrArcNavTab } from "./Header.js";
 import type { TradingMode } from "../../types/index.js";
 
@@ -13,7 +13,6 @@ interface MobileBottomNavProps {
 export function MobileBottomNav({
   activeTab,
   onChangeTab,
-  onOpenHowItWorks,
 }: MobileBottomNavProps) {
   return (
     <nav className="sm:hidden fixed bottom-0 left-0 right-0 h-14 bg-[#080B10] border-t border-[#1E293B] z-50 flex items-center justify-around font-mono text-[10px] select-none">
@@ -45,7 +44,7 @@ export function MobileBottomNav({
         <span>Markets</span>
       </button>
 
-      {/* 3. Terminal */}
+      {/* 3. Terminal (With Integrated AI Agent) */}
       <button
         type="button"
         onClick={() => onChangeTab("terminal")}
@@ -59,21 +58,7 @@ export function MobileBottomNav({
         <span>Terminal</span>
       </button>
 
-      {/* 4. Agent */}
-      <button
-        type="button"
-        onClick={() => onChangeTab("agent")}
-        className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors ${
-          activeTab === "agent"
-            ? "text-[#00E5FF] font-bold bg-[#0D121D] border-t-2 border-[#00E5FF]"
-            : "text-[#64748B] hover:text-[#94A3B8]"
-        }`}
-      >
-        <Bot size={16} />
-        <span>Agent</span>
-      </button>
-
-      {/* 5. Stream */}
+      {/* 4. Stream */}
       <button
         type="button"
         onClick={() => onChangeTab("stream")}

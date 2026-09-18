@@ -31,7 +31,7 @@ export function ModeBanner({
           REAL CAPITAL MODE ACTIVE
         </span>
         <span className="text-text-secondary hidden md:inline">
-          — Live on-chain orders on Somnia Shannon (50312). Capital is at risk.
+          — Live on-chain orders on Arc L1 Mainnet (5042). Capital is at risk.
         </span>
       </div>
 

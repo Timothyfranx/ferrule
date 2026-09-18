@@ -63,7 +63,7 @@ export function AuditModal({
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `ferrule_verified_audit_${Date.now()}.csv`);
+    link.setAttribute("download", `ferrarc_verified_audit_${Date.now()}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -80,7 +80,7 @@ export function AuditModal({
               VERIFIED EXECUTION & CALIBRATION AUDIT
             </span>
             <span className="text-[10px] px-1.5 py-0.5 bg-bg-raised border border-border-subtle text-text-dim">
-              Somnia Shannon Testnet 50312
+              Circle Arc L1 Mainnet 5042
             </span>
           </div>
 
@@ -150,7 +150,7 @@ export function AuditModal({
               <span>EMPIRICAL CALIBRATION BENCHMARK</span>
             </div>
             <p className="text-text-secondary text-[11px] leading-relaxed">
-              Unlike speculative bots that only track nominal PnL, Ferrule evaluates forecaster judgment skill 
+              Unlike speculative bots that only track nominal PnL, FerrArc evaluates forecaster judgment skill 
               via the continuous Brier Quadratic Score: <code className="text-cyan-eval">B = (1/N) Σ (f_t - o_t)²</code>. 
               A score below 0.25 demonstrates positive predictive judgment over the random baseline, ensuring risk parameters 
               remain mathematically sound across all discrete 300s/900s prediction windows.

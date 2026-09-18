@@ -5,7 +5,7 @@ import type {
   VirtualFile, 
   TradingMode 
 } from "../types/index.js";
-import { CANONICAL_CONTRACTS, SOMNIA_CHAIN_ID } from "../config/constants.js";
+import { FERRARC_CONTRACTS, ARC_CHAIN_ID } from "../config/constants.js";
 import { PracticeTradingService } from "./practiceTradingService.js";
 import { RealTradingService } from "./realTradingService.js";
 import { WatcherService } from "./watcherService.js";
@@ -16,7 +16,7 @@ export class TerminalService {
   private virtualFs: Map<string, VirtualFile> = new Map();
   private commandHistory: string[] = [];
   private cwd: string = "/";
-  private static readonly STORAGE_KEY = "ferrule_virtual_fs_v1";
+  private static readonly STORAGE_KEY = "ferrarc_virtual_fs_v2";
 
   constructor() {
     this.initVirtualFs();
@@ -85,7 +85,7 @@ export class TerminalService {
     this.virtualFs.set("/config/env.sh", {
       path: "/config/env.sh",
       description: "Runtime Network Environment Configuration",
-      content: `CHAIN_ID=${SOMNIA_CHAIN_ID}\nNETWORK="Somnia Shannon Testnet"\nCLOB="DreamDEX Event Contracts"\nMODULE="${CANONICAL_CONTRACTS.binaryMarketsModule}"\nCOLLATERAL="${CANONICAL_CONTRACTS.testUsdc}"`,
+      content: `CHAIN_ID=${ARC_CHAIN_ID}\nNETWORK="Circle Arc L1 Mainnet"\nCLOB="FerrArc Event Engine"\nEVENT_ENGINE="${FERRARC_CONTRACTS.eventEngine}"\nSTREAM_ENGINE="${FERRARC_CONTRACTS.streamEngine}"\nCOLLATERAL="Native 18-dec USDC"`,
       isDirectory: false,
     });
 
@@ -156,6 +156,18 @@ export class TerminalService {
       onTriggerAudit?: () => void;
       onFocusMarket?: (marketId: string) => void;
       focusedMarketId?: string;
+      agentState?: {
+        isRunning: boolean;
+        strategy: "contrarian" | "momentum" | "black_scholes";
+        stake: number;
+        signalsCount: number;
+        tradesCount: number;
+        lastAction?: string;
+      };
+      onStartAgent?: (strategy?: "contrarian" | "momentum" | "black_scholes", stake?: number) => void;
+      onStopAgent?: () => void;
+      onTriggerAgentDrawer?: () => void;
+      onTriggerAgentRun?: () => Promise<string>;
     }
   ): Promise<TerminalLine[]> {
     const input = rawInput.trim();
@@ -191,13 +203,89 @@ export class TerminalService {
       return initLines;
     }
 
+    // 1b. AGENT COMMAND (Autonomous Agent Daemon)
+    if (cmd === "agent" || cmd === "bot") {
+      const sub = (args[0] || "status").toLowerCase();
+
+      if (sub === "start") {
+        const chosenStrategy = (args[1] || "contrarian").toLowerCase() as "contrarian" | "momentum" | "black_scholes";
+        const chosenStake = parseFloat(args[2] || "5");
+        if (context.onStartAgent) {
+          context.onStartAgent(chosenStrategy, isNaN(chosenStake) ? 5 : chosenStake);
+        }
+        return [
+          { id: `line_${Date.now()}_1`, type: "system", text: `[AGENT] Autonomous Daemon LAUNCHED on Circle Arc L1 (Chain ID: 5042).`, timestamp: now },
+          { id: `line_${Date.now()}_2`, type: "eval", text: `[AGENT] Strategy: ${chosenStrategy.toUpperCase()} | Stake: $${isNaN(chosenStake) ? 5 : chosenStake} USDC | Scan: every 5s.\n[AGENT] Real-time signals & executions will stream into this terminal buffer.`, timestamp: now },
+        ];
+      }
+
+      if (sub === "stop" || sub === "halt" || sub === "kill") {
+        if (context.onStopAgent) {
+          context.onStopAgent();
+        }
+        return [
+          { id: `line_${Date.now()}`, type: "system", text: `[AGENT] Autonomous Daemon HALTED. Daemon state set to IDLE.`, timestamp: now }
+        ];
+      }
+
+      if (sub === "config" || sub === "gui" || sub === "byok" || sub === "keys" || sub === "settings") {
+        if (context.onTriggerAgentDrawer) {
+          context.onTriggerAgentDrawer();
+        }
+        return [
+          { id: `line_${Date.now()}`, type: "system", text: `[AGENT] Opening Autonomous Agent Configuration & BYOK Settings Drawer...`, timestamp: now }
+        ];
+      }
+
+      if (sub === "run") {
+        if (context.onTriggerAgentRun) {
+          const runResult = await context.onTriggerAgentRun();
+          return [
+            { id: `line_${Date.now()}`, type: "eval", text: runResult, timestamp: now }
+          ];
+        }
+        return [
+          { id: `line_${Date.now()}`, type: "system", text: `[AGENT] Manual single-shot scan completed. No immediate edge condition met.`, timestamp: now }
+        ];
+      }
+
+      // Default: status
+      const state = context.agentState || {
+        isRunning: false,
+        strategy: "contrarian",
+        stake: 5,
+        signalsCount: 0,
+        tradesCount: 0,
+      };
+
+      const statusText = `
+FERRARC AUTONOMOUS AGENT DAEMON [Arc L1 Mainnet 5042]:
+  Status:           ${state.isRunning ? "[ACTIVE / RUNNING]" : "[IDLE / STOPPED]"}
+  Strategy:         ${state.strategy.toUpperCase()} (${state.strategy === "contrarian" ? "Fade extreme crowd leans" : state.strategy === "momentum" ? "Ride directional volume" : "Black-Scholes mispricing"})
+  Stake per Call:   $${state.stake.toFixed(2)} USDC (${context.mode === "practice" ? "Practice SIM" : "On-chain Real"})
+  Signer Mode:      ${context.mode === "practice" ? "Client-Side Simulation (Zero Risk)" : context.walletAddress ? `Arc Signer (${context.walletAddress.slice(0, 10)}...)` : "BYOK Private Key"}
+  Signals Logged:   ${state.signalsCount}
+  Orders Executed:  ${state.tradesCount}
+  Last Event:       ${state.lastAction || "Awaiting daemon trigger"}
+
+CLI USAGE:
+  agent start [contrarian|momentum|black_scholes] [stake]
+  agent stop
+  agent run
+  agent config (opens graphical BYOK drawer)`;
+
+      return [
+        { id: `line_${Date.now()}`, type: "output", text: statusText.trim(), timestamp: now }
+      ];
+    }
+
     // 2. HELP COMMAND
     if (cmd === "help" || cmd === "?") {
       return [
         {
           id: `line_${Date.now()}_1`,
           type: "system",
-          text: `Ferrule Terminal Help — Somnia DreamDEX CLOB Binary Shell`,
+          text: `FerrArc Terminal Help — Circle Arc L1 Binary Engine Shell`,
           timestamp: now,
         },
         {
@@ -208,11 +296,18 @@ CORE COMMANDS:
   markets                   List active binary market windows, lean %, and countdowns
   market status <symbol>    Query real-time strike, oracle round, and order book depth
   call <symbol> <up|down> <stake>
-                            Place call (Practice: instant simulated fill; Real: wallet prompt)
+                            Place call (Practice: instant simulated fill; Real: Arc L1 prompt)
   positions                 View open and resolved call ledger with PnL
   scorecard                 Print Brier calibration scorecard and empirical accuracy
-  mode <practice|real>      Switch trading environment
+  mode <practice|real>      Switch trading environment (Practice SIM vs Real Arc L1)
   guide | how-it-works      Open the interactive architecture and protocol guide overlay
+
+AUTONOMOUS AI AGENT DAEMON (CONNECTED):
+  agent                     View autonomous agent status, strategy, and execution stats
+  agent start [strategy]    Launch agent daemon (strategies: contrarian, momentum, black_scholes)
+  agent stop                Halt autonomous agent daemon
+  agent run                 Execute single-shot scan and instant trade evaluation
+  agent config              Open graphical Agent Control & BYOK private key drawer
 
 AUTOMATED STRATEGY WATCHERS:
   watch <symbol> if <condition> then suggest <action>
@@ -258,19 +353,20 @@ SHELL & SCRIPT UTILITIES:
         {
           id: `line_${Date.now()}_1`,
           type: "system",
-          text: `[GUIDE] Opening Ferrule Protocol & System Architecture Overlay...`,
+          text: `[GUIDE] Opening FerrArc Protocol & System Architecture Overlay...`,
           timestamp: now,
         },
         {
           id: `line_${Date.now()}_2`,
           type: "output",
           text: `
-FERRULE SYSTEM OVERVIEW:
-- Central Limit Order Book: Somnia DreamDEX binary markets (Chain ID: 50312)
-- Price Feed Resolution: Pyth Network sub-second oracles
-- MEV Protection Gate: Orders lock 45s prior to contract expiry
+FERRARC SYSTEM OVERVIEW:
+- Central Event Engine: Arc L1 native event engine (Chain ID: 5042)
+- Collateral & Settlement: Native 18-decimal USDC (Zero token approvals needed)
+- Price Feed Resolution: Pyth Network sub-second push feeds
+- Autonomous Execution: Integrated client-side Viem daemon ($0 cloud server cost)
 - Calibration Score: Continuous Brier index tracking (B = (1/N) * sum(f - o)^2)
-- Automated Tooling: Background watcher daemons & bash strategy scripts
+- Cashflow Engine: FerrArc Stream continuous per-second payouts
 
 Interactive overlay launched. Press [ESC] in modal to return to terminal.
 `,
@@ -475,7 +571,7 @@ Available Policies:
       }
 
       return [
-        { id: `line_${Date.now()}_1`, type: "system", text: `[SYS] Querying Somnia Pool (${w.poolAddress})...`, timestamp: now },
+        { id: `line_${Date.now()}_1`, type: "system", text: `[SYS] Querying Arc L1 Pool (${w.poolAddress})...`, timestamp: now },
         { 
           id: `line_${Date.now()}_2`, 
           type: "output", 
@@ -802,14 +898,14 @@ NO/DOWN BOOK: Best Bid: ${w.bestDownBid?.toFixed(3) ?? "-"} | Best Ask: ${w.best
     // 13. WHOAMI COMMAND
     if (cmd === "whoami") {
       const identity = context.walletAddress 
-        ? `wallet:${context.walletAddress} (Somnia Shannon 50312)` 
-        : `guest-trader@somnia-shannon-sandbox`;
+        ? `wallet:${context.walletAddress} (Arc L1 5042)` 
+        : `guest-trader@arc-l1-sandbox`;
       return [{ id: `line_${Date.now()}`, type: "output", text: identity, timestamp: now }];
     }
 
     // 14. ENV COMMAND
     if (cmd === "env") {
-      const envText = `ENVIRONMENT VARIABLES:\n  CHAIN_ID=50312\n  NETWORK="Somnia Shannon Testnet"\n  MODE=${context.mode}\n  MODULE=${CANONICAL_CONTRACTS.binaryMarketsModule}\n  SETTLEMENT=${CANONICAL_CONTRACTS.binarySettlement}\n  COLLATERAL=${CANONICAL_CONTRACTS.testUsdc}\n  CONNECTED_ACCOUNT=${context.walletAddress ?? "none"}`;
+      const envText = `ENVIRONMENT VARIABLES:\n  CHAIN_ID=${ARC_CHAIN_ID}\n  NETWORK="Circle Arc L1 Mainnet"\n  MODE=${context.mode}\n  EVENT_ENGINE=${FERRARC_CONTRACTS.eventEngine}\n  STREAM_ENGINE=${FERRARC_CONTRACTS.streamEngine}\n  COLLATERAL=Native 18-dec USDC\n  CONNECTED_ACCOUNT=${context.walletAddress ?? "none"}`;
       return [{ id: `line_${Date.now()}`, type: "output", text: envText, timestamp: now }];
     }
 

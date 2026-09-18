@@ -41,7 +41,7 @@ describe("TerminalService — Shell & Script Interpreter", () => {
   it("evaluates 'help' command and prints core manual", async () => {
     const lines = await terminal.executeCommand("help", context);
     expect(lines.length).toBeGreaterThan(0);
-    expect(lines[0].text).toContain("Ferrule Terminal Help");
+    expect(lines[0].text).toContain("FerrArc Terminal Help");
     expect(lines[1].text).toContain("CORE COMMANDS");
   });
 
@@ -73,7 +73,35 @@ describe("TerminalService — Shell & Script Interpreter", () => {
     expect(whoami[0].text).toContain("0x1111222233334444555566667777888899990000");
 
     const env = await terminal.executeCommand("env", context);
-    expect(env[0].text).toContain("CHAIN_ID=50312");
+    expect(env[0].text).toContain("CHAIN_ID=5042");
+  });
+
+  it("evaluates 'agent', 'agent start', and 'agent stop'", async () => {
+    let started = false;
+    let stopped = false;
+    const ctx = {
+      ...context,
+      agentState: {
+        isRunning: false,
+        strategy: "contrarian" as const,
+        stake: 5,
+        signalsCount: 3,
+        tradesCount: 2,
+      },
+      onStartAgent: () => { started = true; },
+      onStopAgent: () => { stopped = true; },
+    };
+
+    const status = await terminal.executeCommand("agent", ctx);
+    expect(status[0].text).toContain("FERRARC AUTONOMOUS AGENT DAEMON");
+
+    const start = await terminal.executeCommand("agent start contrarian 10", ctx);
+    expect(start[0].text).toContain("[AGENT] Autonomous Daemon LAUNCHED");
+    expect(started).toBe(true);
+
+    const stop = await terminal.executeCommand("agent stop", ctx);
+    expect(stop[0].text).toContain("[AGENT] Autonomous Daemon HALTED");
+    expect(stopped).toBe(true);
   });
 
   it("lists virtual files with 'ls' and reads script with 'cat'", async () => {

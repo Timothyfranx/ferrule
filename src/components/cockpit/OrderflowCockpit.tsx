@@ -97,7 +97,7 @@ export function OrderflowCockpit({
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-6 text-text-dim font-mono text-[12px]">
         <BarChart3 size={24} className="mb-2 opacity-50 animate-pulse" />
-        <span>Scanning Somnia Shannon CLOB order books...</span>
+        <span>Scanning Arc L1 binary order books...</span>
       </div>
     );
   }
@@ -137,7 +137,7 @@ export function OrderflowCockpit({
 
         <div className="hidden sm:flex items-center gap-2 text-[10px] font-mono text-text-dim shrink-0">
           <Sparkles size={12} className="text-cyan-eval" />
-          <span>Real Somnia CLOB (50312)</span>
+          <span>Arc L1 Mainnet (5042)</span>
         </div>
       </div>
 

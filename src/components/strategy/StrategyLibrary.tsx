@@ -185,7 +185,7 @@ export function StrategyLibrary({
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(strategies, null, 2));
     const downloadAnchor = document.createElement("a");
     downloadAnchor.setAttribute("href", dataStr);
-    downloadAnchor.setAttribute("download", `ferrule_strategies_${Date.now()}.json`);
+    downloadAnchor.setAttribute("download", `ferrarc_strategies_${Date.now()}.json`);
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.remove();
@@ -520,9 +520,9 @@ export function StrategyLibrary({
         <div className="border border-border-base bg-bg-raised p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 font-mono">
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <span className="w-2 h-2 rounded-full bg-up-green shrink-0" />
-            <span className="text-[11px] text-up-green font-semibold">ferrule:rules#</span>
+            <span className="text-[11px] text-up-green font-semibold">ferrarc:rules#</span>
             <span className="text-[12px] text-text-secondary truncate">
-              rule-eval-daemon --threads=4 --tick-interval=1000ms --dump-path=/var/log/ferrule/rules.db
+              rule-eval-daemon --threads=4 --tick-interval=1000ms --dump-path=/var/log/ferrarc/rules.db
             </span>
           </div>
 

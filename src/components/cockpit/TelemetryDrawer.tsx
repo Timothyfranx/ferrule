@@ -66,7 +66,7 @@ export function TelemetryDrawer({
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `ferrule_${mode}_telemetry_${Date.now()}.csv`);
+    link.setAttribute("download", `ferrarc_${mode}_telemetry_${Date.now()}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -109,7 +109,7 @@ export function TelemetryDrawer({
           <div className="hidden md:flex items-center gap-1 text-text-dim">
             <span>Execution Latency:</span>
             <strong className="text-text-secondary tabular-nums">
-              {mode === "practice" ? "< 1ms (Local)" : "Sub-second (Somnia Shannon)"}
+              {mode === "practice" ? "< 1ms (Local)" : "Sub-second (Arc L1 5042)"}
             </strong>
           </div>
         </div>

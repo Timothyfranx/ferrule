@@ -79,7 +79,7 @@ export function TerminalPrompt({ mode, cwd = "/", onSubmit, commandHistory }: Te
             isPractice ? "text-up-green" : "text-down-red"
           }`}
         >
-          ferrule/{displayCwd} $
+          ferrarc/{displayCwd} $
         </span>
 
         <input

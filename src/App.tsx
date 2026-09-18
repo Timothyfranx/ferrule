@@ -356,7 +356,7 @@ export default function App() {
             windows={windows}
             onEnterTerminal={() => handleTabChange("terminal")}
             onEnterMarkets={() => handleTabChange("markets")}
-            onEnterAgent={() => handleTabChange("agent")}
+            onEnterAgent={() => handleTabChange("terminal")}
             onEnterStream={() => handleTabChange("stream")}
             onPlaceCall={handlePlaceCall}
             mode={mode}

@@ -311,19 +311,19 @@ export function HowItWorksModal({
                   <div className="p-4 space-y-3">
                     <div>
                       <span className="text-text-dim text-[10px]"># 1. Query active market windows &amp; crowd lean</span>
-                      <div className="text-cyan-eval font-bold">ferrule/~ $ markets</div>
+                      <div className="text-cyan-eval font-bold">ferrarc/~ $ markets</div>
                     </div>
                     <div>
                       <span className="text-text-dim text-[10px]"># 2. Place an order directly via CLI</span>
-                      <div className="text-cyan-eval font-bold">ferrule/~ $ call BTC UP 50</div>
+                      <div className="text-cyan-eval font-bold">ferrarc/~ $ call BTC UP 50</div>
                     </div>
                     <div>
                       <span className="text-text-dim text-[10px]"># 3. Spawn an automated background watcher</span>
-                      <div className="text-cyan-eval font-bold">ferrule/~ $ watch BTC-15m if lean&gt;=0.65 then suggest stake 250 down</div>
+                      <div className="text-cyan-eval font-bold">ferrarc/~ $ watch BTC-15m if lean&gt;=0.65 then suggest stake 250 down</div>
                     </div>
                     <div>
                       <span className="text-text-dim text-[10px]"># 4. Execute a quantitative algorithmic strategy script</span>
-                      <div className="text-cyan-eval font-bold">ferrule/~ $ run /strategies/fade_crowd.sh</div>
+                      <div className="text-cyan-eval font-bold">ferrarc/~ $ run /strategies/fade_crowd.sh</div>
                     </div>
                   </div>
                 </div>
@@ -341,7 +341,7 @@ export function HowItWorksModal({
                     Crowd Lean, Tension Clamp &amp; Payouts
                   </h2>
                   <p className="text-xs sm:text-sm text-text-secondary mt-1.5 leading-relaxed">
-                    Ferrule transforms raw binary order books into continuous crowd-lean probabilities and calculates deterministic payout multipliers.
+                    FerrArc transforms raw binary order books into continuous crowd-lean probabilities and calculates deterministic payout multipliers.
                   </p>
                 </div>
 
