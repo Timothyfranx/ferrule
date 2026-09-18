@@ -11,7 +11,6 @@ import {
 } from "./services/index.js";
 import { 
   Header, 
-  Footer, 
   MobileBottomNav,
   HowItWorksModal,
   LandingScreen,
@@ -422,12 +421,7 @@ export default function App() {
         )}
       </main>
 
-      {/* 3. Sleek Footer (Desktop Status Strip) */}
-      <div className="hidden sm:block">
-        <Footer mode={mode} accountAddress={address} />
-      </div>
-
-      {/* 4. Mobile Bottom Navigation Bar */}
+      {/* Mobile Bottom Navigation Bar */}
       <MobileBottomNav
         activeTab={activeTab}
         onChangeTab={handleTabChange}
